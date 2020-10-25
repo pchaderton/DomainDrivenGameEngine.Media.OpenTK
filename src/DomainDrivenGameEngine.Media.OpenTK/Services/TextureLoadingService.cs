@@ -141,14 +141,14 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
 
             for (var index = 0; index < 6; index++)
             {
-                var texture = textures[0];
+                var texture = textures[index];
                 var bytes = texture.Bytes.ToArray();
                 if (texture.Format == DomainPixelFormat.Rgb8)
                 {
                     bytes = ConvertBytesToRgba8(bytes);
                 }
 
-                GL.TexSubImage2D(TextureTarget.TextureCubeMapPositiveX + index, 0, 0, 0, texture.Width, texture.Height, OpenTKPixelFormat.Rgba, PixelType.UnsignedByte, bytes);
+                GL.TexImage2D(TextureTarget.TextureCubeMapPositiveX + index, 0, PixelInternalFormat.Rgba, texture.Width, texture.Height, 0, OpenTKPixelFormat.Rgba, PixelType.UnsignedByte, bytes);
             }
 
             ConfigureBoundTexture(GenerateMipmapTarget.TextureCubeMap, TextureTarget.TextureCubeMap);

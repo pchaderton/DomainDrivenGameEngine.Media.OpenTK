@@ -3,7 +3,7 @@
   <PropertyGroup>
     <PackageId>DomainDrivenGameEngine.Media.OpenTK</PackageId>
     <Description>Implementations for loading media for use with OpenTK 4.0+.</Description>
-    <Version>0.1.1</Version>
+    <Version>0.1.2</Version>
     <Authors>Preston Chaderton</Authors>
     <Company>Preston Chaderton</Company>
     <RepositoryUrl>https://github.com/pchaderton/DomainDrivenGameEngine.Media.OpenTK</RepositoryUrl>

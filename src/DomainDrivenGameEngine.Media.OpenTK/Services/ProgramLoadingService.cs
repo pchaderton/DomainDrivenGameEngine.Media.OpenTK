@@ -87,6 +87,8 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
 
             GL.ShaderSource(shaderId, shader.Source);
 
+            GL.CompileShader(shaderId);
+
             GL.GetShader(shaderId, ShaderParameter.CompileStatus, out int isCompiled);
 
             if (isCompiled == 0)
