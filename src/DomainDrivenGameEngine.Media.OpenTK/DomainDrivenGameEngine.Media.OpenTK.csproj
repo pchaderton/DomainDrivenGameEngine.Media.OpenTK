@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>DomainDrivenGameEngine.Media.OpenTK</PackageId>
+    <Description>Implementations for loading media for use with OpenTK 4.0+.</Description>
+    <Version>0.1.1</Version>
+    <Authors>Preston Chaderton</Authors>
+    <Company>Preston Chaderton</Company>
+    <RepositoryUrl>https://github.com/pchaderton/DomainDrivenGameEngine.Media.OpenTK</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DomainDrivenGameEngine.Media" Version="0.1.13" />
+    <PackageReference Include="DomainDrivenGameEngine.RuleSet" Version="0.1.2">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="OpenTK" Version="4.0.6" />
+  </ItemGroup>
+
+</Project>
