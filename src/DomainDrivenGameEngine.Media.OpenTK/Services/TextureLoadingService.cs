@@ -171,6 +171,11 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
             var expectedHeight = redTexture.Height;
             foreach (var texture in textures)
             {
+                if (texture == null)
+                {
+                    continue;
+                }
+
                 AssertSupportedPixelFormat(texture.Format);
                 if (expectedWidth != texture.Width || expectedHeight != texture.Height)
                 {
