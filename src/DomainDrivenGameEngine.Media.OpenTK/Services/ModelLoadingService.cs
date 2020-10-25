@@ -170,12 +170,44 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                                                 shaderReference));
             }
 
-            return new LoadedModel(loadedMeshes);
+            var loadedModel = new LoadedModel(loadedMeshes);
+
+            if (referencedTextures.Count > 0)
+            {
+                _textureReferencesByModelId.Add(loadedModel.Id, referencedTextures);
+            }
+
+            if (referencedShaders.Count > 0)
+            {
+                _shaderReferencesByModelId.Add(loadedModel.Id, referencedShaders);
+            }
+
+            return loadedModel;
         }
 
         /// <inheritdoc/>
         protected override void UnloadImplementation(LoadedModel implementation)
         {
+            if (_textureReferencesByModelId.TryGetValue(implementation.Id, out var referencedTextures))
+            {
+                foreach (var referencedTexture in referencedTextures)
+                {
+                    _textureReferenceService.Unreference(referencedTexture);
+                }
+
+                _textureReferencesByModelId.Remove(implementation.Id);
+            }
+
+            if (_shaderReferencesByModelId.TryGetValue(implementation.Id, out var referencedShaders))
+            {
+                foreach (var referencedShader in referencedShaders)
+                {
+                    _shaderReferenceService.Unreference(referencedShader);
+                }
+
+                _shaderReferencesByModelId.Remove(implementation.Id);
+            }
+
             foreach (var mesh in implementation.Meshes)
             {
                 GL.DeleteVertexArray(mesh.VertexArrayId);
