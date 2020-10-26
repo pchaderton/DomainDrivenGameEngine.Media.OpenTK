@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using DomainDrivenGameEngine.Media.Models;
 using DomainDrivenGameEngine.Media.OpenTK.Models;
@@ -83,16 +84,11 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         /// <summary>
         /// Generates mip maps and configures texture parameters for the currently bound texture.
         /// </summary>
-        /// <param name="mipmapTarget">The <see cref="GenerateMipmapTarget"/> to use for generating mip maps.</param>
         /// <param name="textureTarget">The <see cref="TextureTarget"/> to use for configuring parameters.</param>
-        private void ConfigureBoundTexture(GenerateMipmapTarget mipmapTarget, TextureTarget textureTarget)
+        /// <param name="textureParameters">The parameters to apply.</param>
+        private void ConfigureBoundTexture(TextureTarget textureTarget, IReadOnlyDictionary<TextureParameterName, int> textureParameters)
         {
-            if (_configuration.GenerateMipmaps)
-            {
-                GL.GenerateMipmap(mipmapTarget);
-            }
-
-            foreach (var parameterKvp in _configuration.TextureParameters)
+            foreach (var parameterKvp in textureParameters)
             {
                 GL.TexParameter(textureTarget, parameterKvp.Key, parameterKvp.Value);
             }
@@ -151,7 +147,12 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                 GL.TexImage2D(TextureTarget.TextureCubeMapPositiveX + index, 0, PixelInternalFormat.Rgba, texture.Width, texture.Height, 0, OpenTKPixelFormat.Rgba, PixelType.UnsignedByte, bytes);
             }
 
-            ConfigureBoundTexture(GenerateMipmapTarget.TextureCubeMap, TextureTarget.TextureCubeMap);
+            if (_configuration.GenerateMipmaps)
+            {
+                GL.GenerateMipmap(GenerateMipmapTarget.TextureCubeMap);
+            }
+
+            ConfigureBoundTexture(TextureTarget.TextureCubeMap, _configuration.CubeMapTextureParameters);
 
             return new LoadedTexture(textureId);
         }
@@ -167,8 +168,9 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         private LoadedTexture LoadPackedTexture(Texture redTexture, Texture greenTexture, Texture blueTexture, Texture alphaTexture)
         {
             var textures = new[] { redTexture, greenTexture, blueTexture, alphaTexture };
-            var expectedWidth = redTexture.Width;
-            var expectedHeight = redTexture.Height;
+            var firstTexture = textures.First(t => t != null);
+            var expectedWidth = firstTexture.Width;
+            var expectedHeight = firstTexture.Height;
             foreach (var texture in textures)
             {
                 if (texture == null)
@@ -184,6 +186,15 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
             }
 
             var bytes = new byte[expectedWidth * expectedHeight * 4];
+
+            var defaultColorValues = new byte[]
+            {
+                _configuration.DefaultPackedTextureColor.R,
+                _configuration.DefaultPackedTextureColor.G,
+                _configuration.DefaultPackedTextureColor.B,
+                _configuration.DefaultPackedTextureColor.A,
+            };
+
             for (var index = 0; index < 4; index++)
             {
                 var sourceTexture = textures.ElementAtOrDefault(index);
@@ -201,9 +212,10 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                 }
                 else
                 {
+                    var defaultValue = defaultColorValues[index];
                     for (var destIndex = index; destIndex < bytes.Length; destIndex += 4)
                     {
-                        bytes[destIndex] = 255;
+                        bytes[destIndex] = defaultValue;
                     }
                 }
             }
@@ -234,7 +246,12 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
             GL.TexStorage2D(TextureTarget2d.Texture2D, texture.Width >= 16 && texture.Height >= 16 ? 4 : 1, SizedInternalFormat.Rgba8, texture.Width, texture.Height);
             GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, texture.Width, texture.Height, OpenTKPixelFormat.Rgba, PixelType.UnsignedByte, bytes);
 
-            ConfigureBoundTexture(GenerateMipmapTarget.Texture2D, TextureTarget.Texture2D);
+            if (_configuration.GenerateMipmaps)
+            {
+                GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+            }
+
+            ConfigureBoundTexture(TextureTarget.Texture2D, _configuration.TextureParameters);
 
             return new LoadedTexture(textureId);
         }
