@@ -16,7 +16,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
     /// <remarks>
     /// When loading cube map textures, six textures must be provided in the following order: xpos, xneg, ypos, yneg, zpos, zneg.
     /// </remarks>
-    public class TextureLoadingService : BaseMediaLoadingService<Texture, LoadedTexture>
+    public class TextureImplementationService : BaseMediaImplementationService<Texture, LoadedTexture>
     {
         /// <summary>
         /// The <see cref="TextureLoadingConfiguration"/> to use when loading textures.
@@ -24,45 +24,48 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         private readonly TextureLoadingConfiguration _configuration;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TextureLoadingService"/> class.
+        /// Initializes a new instance of the <see cref="TextureImplementationService"/> class.
         /// </summary>
-        /// <param name="mediaSources">The <see cref="IMediaSourceService{Texture}"/>s to use for sourcing textures.</param>
-        public TextureLoadingService(IMediaSourceService<Texture>[] mediaSources)
-            : this(mediaSources, TextureLoadingConfiguration.Default)
+        public TextureImplementationService()
+            : this(TextureLoadingConfiguration.Default)
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TextureLoadingService"/> class.
+        /// Initializes a new instance of the <see cref="TextureImplementationService"/> class.
         /// </summary>
-        /// <param name="mediaSources">The <see cref="IMediaSourceService{Texture}"/>s to use for sourcing textures.</param>
         /// <param name="configuration">The <see cref="TextureLoadingConfiguration"/> to use when loading textures.</param>
-        public TextureLoadingService(IMediaSourceService<Texture>[] mediaSources, TextureLoadingConfiguration configuration)
-            : base(mediaSources, new uint[] { 1, 2, 3, 4, 6 })
+        public TextureImplementationService(TextureLoadingConfiguration configuration)
+            : base(new uint[] { 1, 2, 3, 4, 6 })
         {
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
         /// <inheritdoc/>
-        protected override LoadedTexture LoadImplementation(params Texture[] media)
+        public override LoadedTexture LoadImplementation(IReadOnlyCollection<Texture> media, IReadOnlyCollection<string> paths = null)
         {
-            if (media.Length == 6)
+            if (media.Count == 6)
             {
-                return LoadCubeMapTexture(media[0], media[1], media[2], media[3], media[4], media[5]);
+                return LoadCubeMapTexture(media.ElementAt(0),
+                                          media.ElementAt(1),
+                                          media.ElementAt(2),
+                                          media.ElementAt(3),
+                                          media.ElementAt(4),
+                                          media.ElementAt(5));
             }
-            else if (media.Length >= 2 && media.Length <= 4)
+            else if (media.Count >= 2 && media.Count <= 4)
             {
-                return LoadPackedTexture(media[0],
-                                         media[1],
-                                         media.Length >= 3 ? media[2] : null,
-                                         media.Length >= 4 ? media[3] : null);
+                return LoadPackedTexture(media.ElementAt(0),
+                                         media.ElementAt(1),
+                                         media.ElementAtOrDefault(2),
+                                         media.ElementAtOrDefault(3));
             }
 
-            return LoadSingleTexture(media[0]);
+            return LoadSingleTexture(media.First());
         }
 
         /// <inheritdoc/>
-        protected override void UnloadImplementation(LoadedTexture implementation)
+        public override void UnloadImplementation(LoadedTexture implementation)
         {
             GL.DeleteTexture(implementation.TextureId);
         }

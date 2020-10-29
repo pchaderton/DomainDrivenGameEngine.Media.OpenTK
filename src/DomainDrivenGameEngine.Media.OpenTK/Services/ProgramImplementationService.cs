@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using DomainDrivenGameEngine.Media.Models;
 using DomainDrivenGameEngine.Media.OpenTK.Models;
 using DomainDrivenGameEngine.Media.Services;
@@ -14,7 +15,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
     /// If no configuration is provided, uses a default configuration which assumes each program
     /// needs a vertex shader and a fragment shader.
     /// </remarks>
-    public class ProgramLoadingService : BaseMediaLoadingService<Shader, LoadedProgram>
+    public class ProgramImplementationService : BaseMediaImplementationService<Shader, LoadedProgram>
     {
         /// <summary>
         /// The <see cref="ProgramLoadingConfiguration"/> to use for loading programs.
@@ -22,33 +23,31 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         private readonly ProgramLoadingConfiguration _configuration;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ProgramLoadingService"/> class.
+        /// Initializes a new instance of the <see cref="ProgramImplementationService"/> class.
         /// </summary>
-        /// <param name="sources">The <see cref="IMediaSourceService{Shader}"/>s to use for sourcing shaders.</param>
-        public ProgramLoadingService(IMediaSourceService<Shader>[] sources)
-            : this(sources, ProgramLoadingConfiguration.Default)
+        public ProgramImplementationService()
+            : this(ProgramLoadingConfiguration.Default)
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ProgramLoadingService"/> class.
+        /// Initializes a new instance of the <see cref="ProgramImplementationService"/> class.
         /// </summary>
-        /// <param name="sources">The <see cref="IMediaSourceService{Shader}"/> s to use for sourcing shaders.</param>
         /// <param name="configuration">The <see cref="ProgramLoadingConfiguration"/> to use for loading programs.</param>
-        public ProgramLoadingService(IMediaSourceService<Shader>[] sources, ProgramLoadingConfiguration configuration)
-            : base(sources, new uint[] { (uint)configuration.ShaderTypes.Count })
+        public ProgramImplementationService(ProgramLoadingConfiguration configuration)
+            : base(new uint[] { (uint)configuration.ShaderTypes.Count })
         {
             _configuration = configuration;
         }
 
         /// <inheritdoc/>
-        protected override LoadedProgram LoadImplementation(params Shader[] media)
+        public override LoadedProgram LoadImplementation(IReadOnlyCollection<Shader> media, IReadOnlyCollection<string> paths = null)
         {
             var shaderIds = new List<int>();
             var shaderIndex = 0;
             foreach (var shaderType in _configuration.ShaderTypes)
             {
-                shaderIds.Add(CompileShader(media[shaderIndex++], shaderType));
+                shaderIds.Add(CompileShader(media.ElementAt(shaderIndex++), shaderType));
             }
 
             var programId = GL.CreateProgram();
@@ -70,7 +69,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         }
 
         /// <inheritdoc/>
-        protected override void UnloadImplementation(LoadedProgram implementation)
+        public override void UnloadImplementation(LoadedProgram implementation)
         {
             GL.DeleteProgram(implementation.ProgramId);
         }

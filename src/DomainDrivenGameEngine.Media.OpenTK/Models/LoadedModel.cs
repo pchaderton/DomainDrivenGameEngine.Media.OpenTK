@@ -7,7 +7,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
     /// <summary>
     /// A loaded model for use with OpenTK.
     /// </summary>
-    public class LoadedModel : IMediaImplementation
+    public class LoadedModel : IMediaImplementation<Model>
     {
         /// <summary>
         /// A counter for the ID of the next generated model.

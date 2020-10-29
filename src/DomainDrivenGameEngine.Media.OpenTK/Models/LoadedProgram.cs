@@ -6,7 +6,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
     /// <summary>
     /// A loaded program for use with OpenTK.
     /// </summary>
-    public class LoadedProgram : IMediaImplementation
+    public class LoadedProgram : IMediaImplementation<Shader>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="LoadedProgram"/> class.

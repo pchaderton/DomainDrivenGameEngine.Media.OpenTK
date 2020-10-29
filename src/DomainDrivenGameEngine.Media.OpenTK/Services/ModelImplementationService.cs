@@ -16,12 +16,17 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
     /// The domain assumes that vertex texture coordinates start from the top at Y=0, which is opposite of what
     /// OpenGL assumes, so to compensate for that vertex texture coordinates need to be inverted.
     /// </remarks>
-    public class ModelLoadingService : BaseMediaLoadingService<Model, LoadedModel>
+    public class ModelImplementationService : BaseMediaImplementationService<Model, LoadedModel>
     {
         /// <summary>
         /// The <see cref="ModelLoadingConfiguration"/> to use when loading models.
         /// </summary>
         private readonly ModelLoadingConfiguration _configuration;
+
+        /// <summary>
+        /// The <see cref="IFileAccessService"/> to use for accessing files and manipulating paths.
+        /// </summary>
+        private readonly IFileAccessService _fileAccessService;
 
         /// <summary>
         /// Any shaders referenced for a model that had an implementation loaded.
@@ -44,53 +49,78 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         private readonly IMediaReferenceService<Texture> _textureReferenceService;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ModelLoadingService"/> class.
+        /// Initializes a new instance of the <see cref="ModelImplementationService"/> class.
         /// </summary>
-        /// <param name="sources">The <see cref="IMediaSourceService{Model}"/>s to use for sourcing models.</param>
         /// <param name="textureLoadingService">The <see cref="IMediaLoadingService{Texture, LoadedTexture}"/> to use to reference textures.</param>
         /// <param name="shaderLoadingService">The <see cref="IMediaLoadingService{Shader, LoadedProgram}"/> to use to reference shader programs.</param>
-        public ModelLoadingService(IMediaSourceService<Model>[] sources,
-                                   IMediaLoadingService<Texture, LoadedTexture> textureLoadingService,
-                                   IMediaLoadingService<Shader, LoadedProgram> shaderLoadingService)
-            : this(sources, textureLoadingService, shaderLoadingService, ModelLoadingConfiguration.DefaultStatic)
+        /// <param name="fileAccessService">The <see cref="IFileAccessService"/> to use for accessing files and manipulating paths.</param>
+        public ModelImplementationService(IMediaLoadingService<Texture, LoadedTexture> textureLoadingService,
+                                          IMediaLoadingService<Shader, LoadedProgram> shaderLoadingService,
+                                          IFileAccessService fileAccessService)
+            : this(textureLoadingService, shaderLoadingService, fileAccessService, ModelLoadingConfiguration.DefaultStatic)
         {
-            _textureReferenceService = textureLoadingService ?? throw new ArgumentNullException(nameof(textureLoadingService));
-            _shaderReferenceService = shaderLoadingService ?? throw new ArgumentNullException(nameof(shaderLoadingService));
-            _shaderReferencesByModelId = new Dictionary<long, IReadOnlyCollection<IMediaReference<Shader>>>();
-            _textureReferencesByModelId = new Dictionary<long, IReadOnlyCollection<IMediaReference<Texture>>>();
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ModelLoadingService"/> class.
+        /// Initializes a new instance of the <see cref="ModelImplementationService"/> class.
         /// </summary>
-        /// <param name="sources">The <see cref="IMediaSourceService{Model}"/>s to use for sourcing models.</param>
         /// <param name="textureLoadingService">The <see cref="IMediaLoadingService{Texture, LoadedTexture}"/> to use to reference textures.</param>
         /// <param name="shaderLoadingService">The <see cref="IMediaLoadingService{Shader, LoadedProgram}"/> to use to reference shader programs.</param>
+        /// <param name="fileAccessService">The <see cref="IFileAccessService"/> to use for accessing files and manipulating paths.</param>
         /// <param name="configuration">The <see cref="ModelLoadingConfiguration"/> to use when loading models.</param>
-        public ModelLoadingService(IMediaSourceService<Model>[] sources,
-                                   IMediaLoadingService<Texture, LoadedTexture> textureLoadingService,
-                                   IMediaLoadingService<Shader, LoadedProgram> shaderLoadingService,
-                                   ModelLoadingConfiguration configuration)
-            : base(sources)
+        public ModelImplementationService(IMediaLoadingService<Texture, LoadedTexture> textureLoadingService,
+                                          IMediaLoadingService<Shader, LoadedProgram> shaderLoadingService,
+                                          IFileAccessService fileAccessService,
+                                          ModelLoadingConfiguration configuration)
         {
             _textureReferenceService = textureLoadingService ?? throw new ArgumentNullException(nameof(textureLoadingService));
             _shaderReferenceService = shaderLoadingService ?? throw new ArgumentNullException(nameof(shaderLoadingService));
+            _fileAccessService = fileAccessService ?? throw new ArgumentNullException(nameof(fileAccessService));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _shaderReferencesByModelId = new Dictionary<long, IReadOnlyCollection<IMediaReference<Shader>>>();
             _textureReferencesByModelId = new Dictionary<long, IReadOnlyCollection<IMediaReference<Texture>>>();
         }
 
         /// <inheritdoc/>
-        protected override LoadedModel LoadImplementation(params Model[] media)
+        public override LoadedModel LoadImplementation(IReadOnlyCollection<Model> media, IReadOnlyCollection<string> paths = null)
         {
             var referencedTextures = new List<IMediaReference<Texture>>();
             var referencedShaders = new List<IMediaReference<Shader>>();
-            var model = media[0];
+            var model = media.ElementAt(0);
+            var path = paths?.ElementAtOrDefault(0);
             var loadedMeshes = new List<LoadedMesh>();
+
+            var embeddedTextureReferences = new List<IMediaReference<Texture>>();
+            if (model.EmbeddedTextures != null)
+            {
+                foreach (var embeddedTexture in model.EmbeddedTextures)
+                {
+                    var embeddedTextureReference = _textureReferenceService.Reference(embeddedTexture);
+                    embeddedTextureReferences.Add(embeddedTextureReference);
+                    referencedTextures.Add(embeddedTextureReference);
+                }
+            }
+
             foreach (var mesh in model.Meshes)
             {
-                var textureReferenceCount = Math.Max(mesh.TexturePaths?.Count ?? 0, mesh.TextureReferences?.Count ?? 0);
-                var textureReferences = Enumerable.Range(0, 3).Select(index => null as IMediaReference<Texture>).ToArray();
+                var textureReferenceCount = Math.Max(Math.Max(mesh.TexturePaths?.Count ?? 0, mesh.TextureReferences?.Count ?? 0), mesh.EmbeddedTextureIndices?.Count ?? 0);
+                var textureReferences = Enumerable.Range(0, textureReferenceCount)
+                                                  .Select(index => null as IMediaReference<Texture>)
+                                                  .ToArray();
+
+                if (mesh.EmbeddedTextureIndices != null)
+                {
+                    var textureReferenceIndex = 0;
+                    foreach (var embeddedTextureIndex in mesh.EmbeddedTextureIndices)
+                    {
+                        if (embeddedTextureIndex != null)
+                        {
+                            textureReferences[textureReferenceIndex] = embeddedTextureReferences[(int)embeddedTextureIndex.Value];
+                        }
+
+                        textureReferenceIndex++;
+                    }
+                }
 
                 if (mesh.TextureReferences != null)
                 {
@@ -113,7 +143,15 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                     {
                         if (textureReferences[textureIndex] == null && !string.IsNullOrWhiteSpace(texturePath))
                         {
-                            var textureReference = _textureReferenceService.Reference(texturePath);
+                            var referencePath = texturePath;
+                            if (!_fileAccessService.IsPathFullyQualified(referencePath))
+                            {
+                                referencePath = string.IsNullOrWhiteSpace(path)
+                                    ? _fileAccessService.GetFullyQualifiedRelativePath(path, texturePath)
+                                    : texturePath;
+                            }
+
+                            var textureReference = _textureReferenceService.Reference(referencePath);
                             textureReferences[textureIndex] = textureReference;
                             referencedTextures.Add(textureReference);
                         }
@@ -232,7 +270,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         }
 
         /// <inheritdoc/>
-        protected override void UnloadImplementation(LoadedModel implementation)
+        public override void UnloadImplementation(LoadedModel implementation)
         {
             if (_textureReferencesByModelId.TryGetValue(implementation.Id, out var referencedTextures))
             {

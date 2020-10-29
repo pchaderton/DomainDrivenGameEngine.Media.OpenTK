@@ -6,7 +6,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
     /// <summary>
     /// A loaded sound effect for use with OpenTK.
     /// </summary>
-    public class LoadedSoundEffect : IMediaImplementation
+    public class LoadedSoundEffect : IMediaImplementation<SoundEffect>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="LoadedSoundEffect"/> class.

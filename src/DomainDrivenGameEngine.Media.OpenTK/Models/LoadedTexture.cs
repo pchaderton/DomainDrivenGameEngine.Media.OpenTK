@@ -6,7 +6,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
     /// <summary>
     /// A loaded texture for use with OpenTK.
     /// </summary>
-    public class LoadedTexture : IMediaImplementation
+    public class LoadedTexture : IMediaImplementation<Texture>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="LoadedTexture"/> class.

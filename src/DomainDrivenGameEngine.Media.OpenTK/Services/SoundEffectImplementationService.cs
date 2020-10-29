@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using DomainDrivenGameEngine.Media.Models;
 using DomainDrivenGameEngine.Media.OpenTK.Models;
 using DomainDrivenGameEngine.Media.Services;
@@ -9,19 +10,17 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
     /// <summary>
     /// A service for loading sound effects.
     /// </summary>
-    public class SoundEffectLoadingService : BaseMediaLoadingService<SoundEffect, LoadedSoundEffect>
+    public class SoundEffectImplementationService : BaseMediaImplementationService<SoundEffect, LoadedSoundEffect>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="SoundEffectLoadingService"/> class.
+        /// Initializes a new instance of the <see cref="SoundEffectImplementationService"/> class.
         /// </summary>
-        /// <param name="sources">The <see cref="IMediaSourceService{SoundEffect}"/>s to use for sourcing sound effects.</param>
-        public SoundEffectLoadingService(IMediaSourceService<SoundEffect>[] sources)
-            : base(sources)
+        public SoundEffectImplementationService()
         {
         }
 
         /// <inheritdoc/>
-        protected override LoadedSoundEffect LoadImplementation(params SoundEffect[] media)
+        public override LoadedSoundEffect LoadImplementation(IReadOnlyCollection<SoundEffect> media, IReadOnlyCollection<string> paths = null)
         {
             var soundEffect = media.First();
 
@@ -36,7 +35,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         }
 
         /// <inheritdoc/>
-        protected override void UnloadImplementation(LoadedSoundEffect implementation)
+        public override void UnloadImplementation(LoadedSoundEffect implementation)
         {
             AL.DeleteBuffer(implementation.BufferId);
         }

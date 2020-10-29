@@ -20,9 +20,13 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         }
 
         /// <inheritdoc/>
-        public override Shader Load(string path)
+        public override Shader Load(Stream stream, string path, string extension)
         {
-            return new Shader(File.ReadAllText(path));
+            // The media loading service will dispose of the source stream for us.
+            using (var streamReader = new StreamReader(stream, leaveOpen: true))
+            {
+                return new Shader(streamReader.ReadToEnd());
+            }
         }
     }
 }
