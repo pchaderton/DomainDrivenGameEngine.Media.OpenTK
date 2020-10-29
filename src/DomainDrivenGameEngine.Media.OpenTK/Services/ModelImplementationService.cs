@@ -146,7 +146,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                             var referencePath = texturePath;
                             if (!_fileAccessService.IsPathFullyQualified(referencePath))
                             {
-                                referencePath = string.IsNullOrWhiteSpace(path)
+                                referencePath = !string.IsNullOrWhiteSpace(path)
                                     ? _fileAccessService.GetFullyQualifiedRelativePath(path, texturePath)
                                     : texturePath;
                             }
