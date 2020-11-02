@@ -29,16 +29,6 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         private readonly IFileAccessService _fileAccessService;
 
         /// <summary>
-        /// Any shaders referenced for a model that had an implementation loaded.
-        /// </summary>
-        private readonly IDictionary<long, IReadOnlyCollection<IMediaReference<Shader>>> _shaderReferencesByModelId;
-
-        /// <summary>
-        /// The <see cref="IMediaReferenceService{Shader}"/> to use to reference shader programs.
-        /// </summary>
-        private readonly IMediaReferenceService<Shader> _shaderReferenceService;
-
-        /// <summary>
         /// Any textures referenced for a model that had an implementation loaded.
         /// </summary>
         private readonly IDictionary<long, IReadOnlyCollection<IMediaReference<Texture>>> _textureReferencesByModelId;
@@ -52,12 +42,10 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         /// Initializes a new instance of the <see cref="ModelImplementationService"/> class.
         /// </summary>
         /// <param name="textureLoadingService">The <see cref="IMediaLoadingService{Texture, LoadedTexture}"/> to use to reference textures.</param>
-        /// <param name="shaderLoadingService">The <see cref="IMediaLoadingService{Shader, LoadedProgram}"/> to use to reference shader programs.</param>
         /// <param name="fileAccessService">The <see cref="IFileAccessService"/> to use for accessing files and manipulating paths.</param>
         public ModelImplementationService(IMediaLoadingService<Texture, LoadedTexture> textureLoadingService,
-                                          IMediaLoadingService<Shader, LoadedProgram> shaderLoadingService,
                                           IFileAccessService fileAccessService)
-            : this(textureLoadingService, shaderLoadingService, fileAccessService, ModelLoadingConfiguration.DefaultStatic)
+            : this(textureLoadingService, fileAccessService, ModelLoadingConfiguration.DefaultStatic)
         {
         }
 
@@ -65,19 +53,15 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         /// Initializes a new instance of the <see cref="ModelImplementationService"/> class.
         /// </summary>
         /// <param name="textureLoadingService">The <see cref="IMediaLoadingService{Texture, LoadedTexture}"/> to use to reference textures.</param>
-        /// <param name="shaderLoadingService">The <see cref="IMediaLoadingService{Shader, LoadedProgram}"/> to use to reference shader programs.</param>
         /// <param name="fileAccessService">The <see cref="IFileAccessService"/> to use for accessing files and manipulating paths.</param>
         /// <param name="configuration">The <see cref="ModelLoadingConfiguration"/> to use when loading models.</param>
         public ModelImplementationService(IMediaLoadingService<Texture, LoadedTexture> textureLoadingService,
-                                          IMediaLoadingService<Shader, LoadedProgram> shaderLoadingService,
                                           IFileAccessService fileAccessService,
                                           ModelLoadingConfiguration configuration)
         {
             _textureReferenceService = textureLoadingService ?? throw new ArgumentNullException(nameof(textureLoadingService));
-            _shaderReferenceService = shaderLoadingService ?? throw new ArgumentNullException(nameof(shaderLoadingService));
             _fileAccessService = fileAccessService ?? throw new ArgumentNullException(nameof(fileAccessService));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            _shaderReferencesByModelId = new Dictionary<long, IReadOnlyCollection<IMediaReference<Shader>>>();
             _textureReferencesByModelId = new Dictionary<long, IReadOnlyCollection<IMediaReference<Texture>>>();
         }
 
@@ -103,68 +87,35 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
 
             foreach (var mesh in model.Meshes)
             {
-                var textureReferenceCount = Math.Max(Math.Max(mesh.TexturePaths?.Count ?? 0, mesh.TextureReferences?.Count ?? 0), mesh.EmbeddedTextureIndices?.Count ?? 0);
-                var textureReferences = Enumerable.Range(0, textureReferenceCount)
-                                                  .Select(index => null as IMediaReference<Texture>)
-                                                  .ToArray();
+                var textureReferences = new List<IMediaReference<Texture>>();
+                var textureUsageTypes = new List<TextureUsageType>();
 
-                if (mesh.EmbeddedTextureIndices != null)
+                foreach (var texture in mesh.MeshTextures)
                 {
-                    var textureReferenceIndex = 0;
-                    foreach (var embeddedTextureIndex in mesh.EmbeddedTextureIndices)
+                    if (texture.Reference != null)
                     {
-                        if (embeddedTextureIndex != null)
+                        textureReferences.Add(texture.Reference);
+                    }
+                    else if (texture.EmbeddedTextureIndex != null)
+                    {
+                        textureReferences.Add(embeddedTextureReferences[(int)texture.EmbeddedTextureIndex.Value]);
+                    }
+                    else
+                    {
+                        var referencePath = texture.Path;
+                        if (!_fileAccessService.IsPathFullyQualified(referencePath))
                         {
-                            textureReferences[textureReferenceIndex] = embeddedTextureReferences[(int)embeddedTextureIndex.Value];
+                            referencePath = !string.IsNullOrWhiteSpace(path)
+                                ? _fileAccessService.GetFullyQualifiedRelativePath(path, referencePath)
+                                : referencePath;
                         }
 
-                        textureReferenceIndex++;
+                        var textureReference = _textureReferenceService.Reference(referencePath);
+                        textureReferences.Add(textureReference);
+                        referencedTextures.Add(textureReference);
                     }
-                }
 
-                if (mesh.TextureReferences != null)
-                {
-                    var textureReferenceIndex = 0;
-                    foreach (var textureReference in mesh.TextureReferences)
-                    {
-                        if (textureReference != null)
-                        {
-                            textureReferences[textureReferenceIndex] = textureReference;
-                        }
-
-                        textureReferenceIndex++;
-                    }
-                }
-
-                if (mesh.TexturePaths != null)
-                {
-                    var textureIndex = 0;
-                    foreach (var texturePath in mesh.TexturePaths)
-                    {
-                        if (textureReferences[textureIndex] == null && !string.IsNullOrWhiteSpace(texturePath))
-                        {
-                            var referencePath = texturePath;
-                            if (!_fileAccessService.IsPathFullyQualified(referencePath))
-                            {
-                                referencePath = !string.IsNullOrWhiteSpace(path)
-                                    ? _fileAccessService.GetFullyQualifiedRelativePath(path, texturePath)
-                                    : texturePath;
-                            }
-
-                            var textureReference = _textureReferenceService.Reference(referencePath);
-                            textureReferences[textureIndex] = textureReference;
-                            referencedTextures.Add(textureReference);
-                        }
-
-                        textureIndex++;
-                    }
-                }
-
-                var shaderReference = mesh.DefaultShaderReference;
-                if (shaderReference == null && mesh.DefaultShaderPaths != null && mesh.DefaultShaderPaths.Count > 0)
-                {
-                    shaderReference = _shaderReferenceService.Reference(paths: mesh.DefaultShaderPaths.ToArray());
-                    referencedShaders.Add(shaderReference);
+                    textureUsageTypes.Add(texture.UsageType);
                 }
 
                 var vertexArrayId = GL.GenVertexArray();
@@ -249,9 +200,9 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                                                 vertexBufferLength,
                                                 indexBufferId,
                                                 indexBufferLength,
-                                                textureReferences.Length >= 1 ? textureReferences : null,
-                                                mesh.DefaultBlendMode,
-                                                shaderReference));
+                                                textureReferences,
+                                                textureUsageTypes,
+                                                mesh.DefaultBlendMode));
             }
 
             var loadedModel = new LoadedModel(loadedMeshes);
@@ -259,11 +210,6 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
             if (referencedTextures.Count > 0)
             {
                 _textureReferencesByModelId.Add(loadedModel.Id, referencedTextures);
-            }
-
-            if (referencedShaders.Count > 0)
-            {
-                _shaderReferencesByModelId.Add(loadedModel.Id, referencedShaders);
             }
 
             return loadedModel;
@@ -280,16 +226,6 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                 }
 
                 _textureReferencesByModelId.Remove(implementation.Id);
-            }
-
-            if (_shaderReferencesByModelId.TryGetValue(implementation.Id, out var referencedShaders))
-            {
-                foreach (var referencedShader in referencedShaders)
-                {
-                    _shaderReferenceService.Unreference(referencedShader);
-                }
-
-                _shaderReferencesByModelId.Remove(implementation.Id);
             }
 
             foreach (var mesh in implementation.Meshes)

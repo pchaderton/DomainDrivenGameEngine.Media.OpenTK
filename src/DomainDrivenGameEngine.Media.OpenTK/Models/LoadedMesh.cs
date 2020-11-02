@@ -18,16 +18,16 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
         /// <param name="indexBufferId">The OpenGL index buffer ID to use for rendering the mesh.</param>
         /// <param name="indexBufferLength">The length of the index buffer.</param>
         /// <param name="textureReferences">The texture references to use for rendering the mesh.</param>
+        /// <param name="textureUsageTypes">The usage type hints for each texture referenced by the mesh.</param>
         /// <param name="defaultBlendMode">The default blend mode to use for the mesh.</param>
-        /// <param name="defaultShaderReference">The reference to the default shader to use for the mesh.</param>
         public LoadedMesh(int vertexArrayId,
                           int vertexBufferId,
                           int vertexBufferLength,
                           int indexBufferId,
                           int indexBufferLength,
                           IReadOnlyCollection<IMediaReference<Texture>> textureReferences,
-                          BlendMode defaultBlendMode = BlendMode.None,
-                          IMediaReference<Shader> defaultShaderReference = null)
+                          IReadOnlyCollection<TextureUsageType> textureUsageTypes,
+                          BlendMode defaultBlendMode = BlendMode.None)
         {
             if (vertexArrayId <= 0)
             {
@@ -60,19 +60,14 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
             IndexBufferId = indexBufferId;
             IndexBufferLength = indexBufferLength;
             TextureReferences = textureReferences ?? new IMediaReference<Texture>[] { };
+            TextureUsageTypes = textureUsageTypes ?? new TextureUsageType[] { };
             DefaultBlendMode = defaultBlendMode;
-            DefaultShaderReference = defaultShaderReference;
         }
 
         /// <summary>
         /// Gets the default blend mode to use for the mesh.
         /// </summary>
         public BlendMode DefaultBlendMode { get; }
-
-        /// <summary>
-        /// Gets the reference to the default shader to use for the mesh.
-        /// </summary>
-        public IMediaReference<Shader> DefaultShaderReference { get; }
 
         /// <summary>
         /// Gets the OpenGL index buffer ID to use for rendering the mesh.
@@ -88,6 +83,11 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
         /// Gets the texture references to use for rendering the mesh.
         /// </summary>
         public IReadOnlyCollection<IMediaReference<Texture>> TextureReferences { get; }
+
+        /// <summary>
+        /// Gets the usage type hints for each texture referenced by the mesh.
+        /// </summary>
+        public IReadOnlyCollection<TextureUsageType> TextureUsageTypes { get; }
 
         /// <summary>
         /// Gets the OpenGL vertex array ID to use for rendering the mesh.
