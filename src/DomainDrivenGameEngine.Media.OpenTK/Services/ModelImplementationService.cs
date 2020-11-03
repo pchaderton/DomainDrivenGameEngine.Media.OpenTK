@@ -19,6 +19,16 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
     public class ModelImplementationService : BaseMediaImplementationService<Model, LoadedModel>
     {
         /// <summary>
+        /// Any animation collections referenced for a model that had an implementation loaded.
+        /// </summary>
+        private readonly IDictionary<long, IMediaReference<AnimationCollection>> _animationCollectionReferencesByModelId;
+
+        /// <summary>
+        /// The <see cref="IMediaReferenceService{AnimationCollection}"/> to use to reference animation collections.
+        /// </summary>
+        private readonly IMediaReferenceService<AnimationCollection> _animationCollectionReferenceService;
+
+        /// <summary>
         /// The <see cref="ModelLoadingConfiguration"/> to use when loading models.
         /// </summary>
         private readonly ModelLoadingConfiguration _configuration;
@@ -42,10 +52,15 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         /// Initializes a new instance of the <see cref="ModelImplementationService"/> class.
         /// </summary>
         /// <param name="textureLoadingService">The <see cref="IMediaLoadingService{Texture, LoadedTexture}"/> to use to reference textures.</param>
+        /// <param name="animationCollectionLoadingService">The <see cref="IMediaLoadingService{AnimationCollection, LoadedAnimationCollection}"/> to use to reference animation collections.</param>
         /// <param name="fileAccessService">The <see cref="IFileAccessService"/> to use for accessing files and manipulating paths.</param>
         public ModelImplementationService(IMediaLoadingService<Texture, LoadedTexture> textureLoadingService,
+                                          IMediaLoadingService<AnimationCollection, LoadedAnimationCollection> animationCollectionLoadingService,
                                           IFileAccessService fileAccessService)
-            : this(textureLoadingService, fileAccessService, ModelLoadingConfiguration.DefaultStatic)
+            : this(textureLoadingService,
+                   animationCollectionLoadingService,
+                   fileAccessService,
+                   ModelLoadingConfiguration.DefaultStatic)
         {
         }
 
@@ -53,16 +68,20 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         /// Initializes a new instance of the <see cref="ModelImplementationService"/> class.
         /// </summary>
         /// <param name="textureLoadingService">The <see cref="IMediaLoadingService{Texture, LoadedTexture}"/> to use to reference textures.</param>
+        /// <param name="animationCollectionLoadingService">The <see cref="IMediaLoadingService{AnimationCollection, LoadedAnimationCollection}"/> to use to reference animation collections.</param>
         /// <param name="fileAccessService">The <see cref="IFileAccessService"/> to use for accessing files and manipulating paths.</param>
         /// <param name="configuration">The <see cref="ModelLoadingConfiguration"/> to use when loading models.</param>
         public ModelImplementationService(IMediaLoadingService<Texture, LoadedTexture> textureLoadingService,
+                                          IMediaLoadingService<AnimationCollection, LoadedAnimationCollection> animationCollectionLoadingService,
                                           IFileAccessService fileAccessService,
                                           ModelLoadingConfiguration configuration)
         {
             _textureReferenceService = textureLoadingService ?? throw new ArgumentNullException(nameof(textureLoadingService));
+            _animationCollectionReferenceService = animationCollectionLoadingService ?? throw new ArgumentNullException(nameof(animationCollectionLoadingService));
             _fileAccessService = fileAccessService ?? throw new ArgumentNullException(nameof(fileAccessService));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _textureReferencesByModelId = new Dictionary<long, IReadOnlyCollection<IMediaReference<Texture>>>();
+            _animationCollectionReferencesByModelId = new Dictionary<long, IMediaReference<AnimationCollection>>()
         }
 
         /// <inheritdoc/>
@@ -84,6 +103,10 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                     referencedTextures.Add(embeddedTextureReference);
                 }
             }
+
+            var animationCollectionReference = model.AnimationCollection != null
+                ? _animationCollectionReferenceService.Reference(model.AnimationCollection)
+                : null;
 
             foreach (var mesh in model.Meshes)
             {
@@ -162,13 +185,13 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                     }
                     else if (enabledVertexAttribute == VertexAttribute.BoneIndices)
                     {
-                        arrayFactoriesWithTypeSizeTuples.Add(new Tuple<Func<Array>, VertexAttribPointerType, int>(() => mesh.Vertices.SelectMany(vertex => Enumerable.Range(0, _configuration.EnabledBoneCount).Select(i => vertex.BoneIndices.Count > i ? vertex.BoneIndices.ElementAt(i) : -1)).ToArray(),
+                        arrayFactoriesWithTypeSizeTuples.Add(new Tuple<Func<Array>, VertexAttribPointerType, int>(() => mesh.Vertices.SelectMany(vertex => Enumerable.Range(0, _configuration.EnabledBoneCount).Select(i => vertex.BoneIndices != null && vertex.BoneIndices.Count > i ? vertex.BoneIndices.ElementAt(i) : -1)).ToArray(),
                                                                                                                   VertexAttribPointerType.Int,
                                                                                                                   _configuration.EnabledBoneCount));
                     }
                     else if (enabledVertexAttribute == VertexAttribute.BoneWeights)
                     {
-                        arrayFactoriesWithTypeSizeTuples.Add(new Tuple<Func<Array>, VertexAttribPointerType, int>(() => mesh.Vertices.SelectMany(vertex => Enumerable.Range(0, _configuration.EnabledBoneCount).Select(i => vertex.BoneWeights.Count > i ? vertex.BoneWeights.ElementAt(i) : 0.0f)).ToArray(),
+                        arrayFactoriesWithTypeSizeTuples.Add(new Tuple<Func<Array>, VertexAttribPointerType, int>(() => mesh.Vertices.SelectMany(vertex => Enumerable.Range(0, _configuration.EnabledBoneCount).Select(i => vertex.BoneIndices != null && vertex.BoneWeights.Count > i ? vertex.BoneWeights.ElementAt(i) : 0.0f)).ToArray(),
                                                                                                                   VertexAttribPointerType.Float,
                                                                                                                   _configuration.EnabledBoneCount));
                     }
@@ -217,7 +240,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                                                 mesh.DefaultBlendMode));
             }
 
-            var loadedModel = new LoadedModel(loadedMeshes, model.SkeletonRoot);
+            var loadedModel = new LoadedModel(loadedMeshes, model.SkeletonRoot, animationCollectionReference);
 
             if (referencedTextures.Count > 0)
             {
@@ -230,6 +253,12 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         /// <inheritdoc/>
         public override void UnloadImplementation(LoadedModel implementation)
         {
+            if (_animationCollectionReferencesByModelId.TryGetValue(implementation.Id, out var referencedAnimationCollection))
+            {
+                _animationCollectionReferenceService.Unreference(referencedAnimationCollection);
+                _animationCollectionReferencesByModelId.Remove(implementation.Id);
+            }
+
             if (_textureReferencesByModelId.TryGetValue(implementation.Id, out var referencedTextures))
             {
                 foreach (var referencedTexture in referencedTextures)

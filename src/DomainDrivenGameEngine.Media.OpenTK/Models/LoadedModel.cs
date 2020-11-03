@@ -19,12 +19,21 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
         /// </summary>
         /// <param name="meshes">The meshes in this model.</param>
         /// <param name="skeletonRoot">The skeleton root for the model.</param>
-        public LoadedModel(IReadOnlyCollection<LoadedMesh> meshes, Bone skeletonRoot = null)
+        /// <param name="animationCollectionReference">The reference to the animation collection that was loaded with this model.</param>
+        public LoadedModel(IReadOnlyCollection<LoadedMesh> meshes,
+                           Bone skeletonRoot = null,
+                           IMediaReference<AnimationCollection> animationCollectionReference = null)
         {
             Meshes = meshes ?? throw new ArgumentNullException(nameof(meshes));
             SkeletonRoot = skeletonRoot;
+            AnimationCollectionReference = animationCollectionReference;
             Id = ++_idCounter;
         }
+
+        /// <summary>
+        /// Gets the reference to the animation collection that was loaded with this model.
+        /// </summary>
+        public IMediaReference<AnimationCollection> AnimationCollectionReference { get; }
 
         /// <summary>
         /// Gets the ID of this model.
