@@ -38,10 +38,10 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                                                        .Select(kf => new KeyFrame<Quaternion>(kf.TimeInSeconds, new Quaternion(kf.Value.X, kf.Value.Y, kf.Value.Z, kf.Value.W)))
                                                        .ToList();
                         var offsetKeyFrames = channel.OffsetKeyFrames
-                                                     .Select(kf => new KeyFrame<Vector3d>(kf.TimeInSeconds, new Vector3d(kf.Value.X, kf.Value.Y, kf.Value.Z)))
+                                                     .Select(kf => new KeyFrame<Vector3>(kf.TimeInSeconds, new Vector3(kf.Value.X, kf.Value.Y, kf.Value.Z)))
                                                      .ToList();
                         var scaleKeyFrames = channel.ScaleKeyFrames
-                                                    .Select(kf => new KeyFrame<Vector3d>(kf.TimeInSeconds, new Vector3d(kf.Value.X, kf.Value.Y, kf.Value.Z)))
+                                                    .Select(kf => new KeyFrame<Vector3>(kf.TimeInSeconds, new Vector3(kf.Value.X, kf.Value.Y, kf.Value.Z)))
                                                     .ToList();
 
                         loadedChannels.Add(new LoadedChannel(channel.BoneName, rotationKeyFrames, offsetKeyFrames, scaleKeyFrames));
