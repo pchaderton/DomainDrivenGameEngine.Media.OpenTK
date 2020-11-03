@@ -160,6 +160,18 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                                                                                                                   VertexAttribPointerType.Float,
                                                                                                                   2));
                     }
+                    else if (enabledVertexAttribute == VertexAttribute.BoneIndices)
+                    {
+                        arrayFactoriesWithTypeSizeTuples.Add(new Tuple<Func<Array>, VertexAttribPointerType, int>(() => mesh.Vertices.SelectMany(vertex => Enumerable.Range(0, _configuration.EnabledBoneCount).Select(i => vertex.BoneIndices.Count > i ? vertex.BoneIndices.ElementAt(i) : -1)).ToArray(),
+                                                                                                                  VertexAttribPointerType.Int,
+                                                                                                                  _configuration.EnabledBoneCount));
+                    }
+                    else if (enabledVertexAttribute == VertexAttribute.BoneWeights)
+                    {
+                        arrayFactoriesWithTypeSizeTuples.Add(new Tuple<Func<Array>, VertexAttribPointerType, int>(() => mesh.Vertices.SelectMany(vertex => Enumerable.Range(0, _configuration.EnabledBoneCount).Select(i => vertex.BoneWeights.Count > i ? vertex.BoneWeights.ElementAt(i) : 0.0f)).ToArray(),
+                                                                                                                  VertexAttribPointerType.Float,
+                                                                                                                  _configuration.EnabledBoneCount));
+                    }
                 }
 
                 var vertexSizeBytes = arrayFactoriesWithTypeSizeTuples.Sum(t => GetSizeOfVertexAttribute(t.Item2) * t.Item3);
@@ -205,7 +217,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                                                 mesh.DefaultBlendMode));
             }
 
-            var loadedModel = new LoadedModel(loadedMeshes);
+            var loadedModel = new LoadedModel(loadedMeshes, model.SkeletonRoot);
 
             if (referencedTextures.Count > 0)
             {
@@ -246,6 +258,10 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
             if (attributeType == VertexAttribPointerType.Float)
             {
                 return sizeof(float);
+            }
+            else if (attributeType == VertexAttribPointerType.Int)
+            {
+                return sizeof(int);
             }
 
             throw new ArgumentException($"Unrecognized {nameof(VertexAttribPointerType)}: {attributeType.ToString()}");

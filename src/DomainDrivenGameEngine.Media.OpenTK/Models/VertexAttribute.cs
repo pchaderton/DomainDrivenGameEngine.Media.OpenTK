@@ -31,5 +31,15 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
         /// The texture coordinate of a vertex, a two element float.
         /// </summary>
         TextureCoordinate,
+
+        /// <summary>
+        /// The indices of the bones the vertex is affected by.
+        /// </summary>
+        BoneIndices,
+
+        /// <summary>
+        /// How much each bone affects a given vertex.
+        /// </summary>
+        BoneWeights,
     }
 }

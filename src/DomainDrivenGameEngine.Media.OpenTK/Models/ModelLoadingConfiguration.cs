@@ -19,16 +19,40 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
                 VertexAttribute.Tangent,
                 VertexAttribute.Color,
                 VertexAttribute.TextureCoordinate,
-            });
+            },
+            0);
+
+        /// <summary>
+        /// The default configuration to use for loading animated models.
+        /// </summary>
+        public static readonly ModelLoadingConfiguration DefaultAnimated =
+            new ModelLoadingConfiguration(new[]
+            {
+                VertexAttribute.Position,
+                VertexAttribute.Normal,
+                VertexAttribute.Tangent,
+                VertexAttribute.Color,
+                VertexAttribute.TextureCoordinate,
+                VertexAttribute.BoneIndices,
+                VertexAttribute.BoneWeights,
+            },
+            4);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ModelLoadingConfiguration"/> class.
         /// </summary>
         /// <param name="enabledVertexAttributes">The in-order vertex attributes to apply to generated vertex buffers.</param>
-        public ModelLoadingConfiguration(IReadOnlyCollection<VertexAttribute> enabledVertexAttributes)
+        /// <param name="enabledBoneCount">The number of bones that can affect each vertex.</param>
+        public ModelLoadingConfiguration(IReadOnlyCollection<VertexAttribute> enabledVertexAttributes, byte enabledBoneCount)
         {
             EnabledVertexAttributes = enabledVertexAttributes ?? throw new ArgumentNullException(nameof(enabledVertexAttributes));
+            EnabledBoneCount = enabledBoneCount;
         }
+
+        /// <summary>
+        /// Gets the number of bones that can affect each vertex.
+        /// </summary>
+        public byte EnabledBoneCount { get; }
 
         /// <summary>
         /// Gets the in-order vertex attributes to apply to generated vertex buffers.

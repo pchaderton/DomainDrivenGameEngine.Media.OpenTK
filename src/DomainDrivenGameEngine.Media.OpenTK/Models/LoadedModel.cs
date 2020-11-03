@@ -18,9 +18,11 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
         /// Initializes a new instance of the <see cref="LoadedModel"/> class.
         /// </summary>
         /// <param name="meshes">The meshes in this model.</param>
-        public LoadedModel(IReadOnlyCollection<LoadedMesh> meshes)
+        /// <param name="skeletonRoot">The skeleton root for the model.</param>
+        public LoadedModel(IReadOnlyCollection<LoadedMesh> meshes, Bone skeletonRoot = null)
         {
             Meshes = meshes ?? throw new ArgumentNullException(nameof(meshes));
+            SkeletonRoot = skeletonRoot;
             Id = ++_idCounter;
         }
 
@@ -33,5 +35,10 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
         /// Gets the meshes in this model.
         /// </summary>
         public IReadOnlyCollection<LoadedMesh> Meshes { get; }
+
+        /// <summary>
+        /// Gets the skeleton root of this model.
+        /// </summary>
+        public Bone SkeletonRoot { get; }
     }
 }
