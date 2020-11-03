@@ -81,7 +81,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
             _fileAccessService = fileAccessService ?? throw new ArgumentNullException(nameof(fileAccessService));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _textureReferencesByModelId = new Dictionary<long, IReadOnlyCollection<IMediaReference<Texture>>>();
-            _animationCollectionReferencesByModelId = new Dictionary<long, IMediaReference<AnimationCollection>>()
+            _animationCollectionReferencesByModelId = new Dictionary<long, IMediaReference<AnimationCollection>>();
         }
 
         /// <inheritdoc/>
