@@ -185,7 +185,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                     }
                     else if (enabledVertexAttribute == VertexAttribute.BoneIndices)
                     {
-                        arrayFactoriesWithTypeSizeTuples.Add(new Tuple<Func<Array>, VertexAttribPointerType, int>(() => mesh.Vertices.SelectMany(vertex => Enumerable.Range(0, _configuration.EnabledBoneCount).Select(i => vertex.BoneIndices != null && vertex.BoneIndices.Count > i ? vertex.BoneIndices.ElementAt(i) : -1)).ToArray(),
+                        arrayFactoriesWithTypeSizeTuples.Add(new Tuple<Func<Array>, VertexAttribPointerType, int>(() => mesh.Vertices.SelectMany(vertex => Enumerable.Range(0, _configuration.EnabledBoneCount).Select(i => vertex.BoneIndices != null && vertex.BoneIndices.Count > i ? vertex.BoneIndices.ElementAt(i) : 0)).ToArray(),
                                                                                                                   VertexAttribPointerType.Int,
                                                                                                                   _configuration.EnabledBoneCount));
                     }
@@ -206,7 +206,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                 foreach (var arrayFactoriesWithTypeSizeTuple in arrayFactoriesWithTypeSizeTuples)
                 {
                     attribPointerTypeSizeOffsetTuples.Add(new Tuple<VertexAttribPointerType, int, int>(arrayFactoriesWithTypeSizeTuple.Item2, arrayFactoriesWithTypeSizeTuple.Item3, destinationOffset));
-                    destinationOffset = CopyValuesToVertexBuffer(arrayFactoriesWithTypeSizeTuple.Item1(), sizeof(float), vertexBuffer, destinationOffset);
+                    destinationOffset = CopyValuesToVertexBuffer(arrayFactoriesWithTypeSizeTuple.Item1(), GetSizeOfVertexAttribute(arrayFactoriesWithTypeSizeTuple.Item2), vertexBuffer, destinationOffset);
                 }
 
                 GL.BufferData(BufferTarget.ArrayBuffer, vertexBuffer.Length, vertexBuffer, BufferUsageHint.StaticDraw);
@@ -227,7 +227,15 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                 {
                     var tuple = attribPointerTypeSizeOffsetTuples[i];
                     GL.EnableVertexAttribArray(i);
-                    GL.VertexAttribPointer(i, tuple.Item2, tuple.Item1, false, tuple.Item2 * GetSizeOfVertexAttribute(tuple.Item1), tuple.Item3);
+                    if (IsIntegerVertexAttribute(tuple.Item1))
+                    {
+                        // Integer based types need to handled strictly or else they get converted into floats, which can be a bad time when using them for bone indices.
+                        GL.VertexAttribIPointer(i, tuple.Item2, VertexAttribIntegerType.Int, tuple.Item2 * GetSizeOfVertexAttribute(tuple.Item1), new int[] { tuple.Item3 });
+                    }
+                    else
+                    {
+                        GL.VertexAttribPointer(i, tuple.Item2, tuple.Item1, false, tuple.Item2 * GetSizeOfVertexAttribute(tuple.Item1), tuple.Item3);
+                    }
                 }
 
                 loadedMeshes.Add(new LoadedMesh(vertexArrayId,
@@ -294,6 +302,16 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
             }
 
             throw new ArgumentException($"Unrecognized {nameof(VertexAttribPointerType)}: {attributeType.ToString()}");
+        }
+
+        /// <summary>
+        /// Checks to see if a <see cref="VertexAttribPointerType"/> is an integer based type, which needs to be handled differently than floats.
+        /// </summary>
+        /// <param name="attributeType">The <see cref="VertexAttribPointerType"/> to check.</param>
+        /// <returns><c>true</c> if it is an integer based type.</returns>
+        private bool IsIntegerVertexAttribute(VertexAttribPointerType attributeType)
+        {
+            return attributeType == VertexAttribPointerType.Int;
         }
 
         /// <summary>
