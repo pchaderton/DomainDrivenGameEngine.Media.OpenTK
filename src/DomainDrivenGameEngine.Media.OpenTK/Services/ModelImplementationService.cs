@@ -5,6 +5,7 @@ using DomainDrivenGameEngine.Media.Models;
 using DomainDrivenGameEngine.Media.OpenTK.Models;
 using DomainDrivenGameEngine.Media.Services;
 using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 using SystemBuffer = System.Buffer;
 
 namespace DomainDrivenGameEngine.Media.OpenTK.Services
@@ -248,7 +249,9 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                                                 mesh.DefaultBlendMode));
             }
 
-            var loadedModel = new LoadedModel(loadedMeshes, model.SkeletonRoot, animationCollectionReference);
+            var loadedSkeleton = GetLoadedSkeleton(model.SkeletonRoot, Matrix4.Identity);
+
+            var loadedModel = new LoadedModel(loadedMeshes, loadedSkeleton, animationCollectionReference);
 
             if (referencedTextures.Count > 0)
             {
@@ -327,6 +330,45 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
             var sizeInBytes = sizePerSourceElement * source.Length;
             SystemBuffer.BlockCopy(source, 0, destination, destinationOffset, sizeInBytes);
             return destinationOffset + sizeInBytes;
+        }
+
+        /// <summary>
+        /// Converts a domain <see cref="Bone"/> and its children to <see cref="LoadedBone"/> objects.
+        /// </summary>
+        /// <param name="bone">The <see cref="Bone"/> to convert.</param>
+        /// <param name="parentOffsetMatrix">The <see cref="Matrix4"/> which represents the bone parent's total offset matrix.</param>
+        /// <returns>The converted <see cref="LoadedBone"/>.</returns>
+        private LoadedBone GetLoadedSkeleton(Bone bone, Matrix4 parentOffsetMatrix)
+        {
+            var boneLocalOffsetMatrix = new Matrix4(bone.OffsetMatrix.M11,
+                                                    bone.OffsetMatrix.M12,
+                                                    bone.OffsetMatrix.M13,
+                                                    bone.OffsetMatrix.M14,
+                                                    bone.OffsetMatrix.M21,
+                                                    bone.OffsetMatrix.M22,
+                                                    bone.OffsetMatrix.M23,
+                                                    bone.OffsetMatrix.M24,
+                                                    bone.OffsetMatrix.M31,
+                                                    bone.OffsetMatrix.M32,
+                                                    bone.OffsetMatrix.M33,
+                                                    bone.OffsetMatrix.M34,
+                                                    bone.OffsetMatrix.M41,
+                                                    bone.OffsetMatrix.M42,
+                                                    bone.OffsetMatrix.M43,
+                                                    bone.OffsetMatrix.M44);
+            boneLocalOffsetMatrix.Transpose();
+
+            var boneGlobalOffsetMatrix = parentOffsetMatrix * boneLocalOffsetMatrix;
+
+            var worldToBindMatrix = Matrix4.Invert(boneGlobalOffsetMatrix);
+
+            var loadedChildren = new List<LoadedBone>();
+            foreach (var child in bone.Children)
+            {
+                loadedChildren.Add(GetLoadedSkeleton(child, boneGlobalOffsetMatrix));
+            }
+
+            return new LoadedBone(bone.Name, worldToBindMatrix, loadedChildren);
         }
     }
 }

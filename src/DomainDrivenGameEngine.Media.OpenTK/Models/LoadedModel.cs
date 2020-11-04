@@ -21,7 +21,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
         /// <param name="skeletonRoot">The skeleton root for the model.</param>
         /// <param name="animationCollectionReference">The reference to the animation collection that was loaded with this model.</param>
         public LoadedModel(IReadOnlyCollection<LoadedMesh> meshes,
-                           Bone skeletonRoot = null,
+                           LoadedBone skeletonRoot = null,
                            IMediaReference<AnimationCollection> animationCollectionReference = null)
         {
             Meshes = meshes ?? throw new ArgumentNullException(nameof(meshes));
@@ -48,6 +48,6 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
         /// <summary>
         /// Gets the skeleton root of this model.
         /// </summary>
-        public Bone SkeletonRoot { get; }
+        public LoadedBone SkeletonRoot { get; }
     }
 }
