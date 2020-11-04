@@ -230,7 +230,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                     if (IsIntegerVertexAttribute(tuple.Item1))
                     {
                         // Integer based types need to handled strictly or else they get converted into floats, which can be a bad time when using them for bone indices.
-                        GL.VertexAttribIPointer(i, tuple.Item2, VertexAttribIntegerType.Int, tuple.Item2 * GetSizeOfVertexAttribute(tuple.Item1), new int[] { tuple.Item3 });
+                        GL.VertexAttribIPointer(i, tuple.Item2, VertexAttribIntegerType.Int, tuple.Item2 * GetSizeOfVertexAttribute(tuple.Item1), (IntPtr)tuple.Item3);
                     }
                     else
                     {
