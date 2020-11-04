@@ -249,7 +249,9 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                                                 mesh.DefaultBlendMode));
             }
 
-            var loadedSkeleton = GetLoadedSkeleton(model.SkeletonRoot, Matrix4.Identity);
+            var loadedSkeleton = model.SkeletonRoot != null
+                ? GetLoadedSkeleton(model.SkeletonRoot, Matrix4.Identity)
+                : null;
 
             var loadedModel = new LoadedModel(loadedMeshes, loadedSkeleton, animationCollectionReference);
 
