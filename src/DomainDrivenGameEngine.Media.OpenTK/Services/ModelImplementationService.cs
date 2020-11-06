@@ -92,7 +92,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
             var referencedTextures = new List<IMediaReference<Texture>>();
             var referencedShaders = new List<IMediaReference<Shader>>();
             var model = media[0];
-            var path = paths.Count > 0 ? paths[0] : null;
+            var path = paths != null && paths.Count > 0 ? paths[0] : null;
             var loadedMeshes = new List<LoadedMesh>();
 
             var embeddedTextureReferences = new List<IMediaReference<Texture>>();
