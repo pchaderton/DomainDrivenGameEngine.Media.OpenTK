@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using DomainDrivenGameEngine.Media.Models;
 using DomainDrivenGameEngine.Media.OpenTK.Models;
 using DomainDrivenGameEngine.Media.Services;
@@ -41,13 +40,13 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         }
 
         /// <inheritdoc/>
-        public override LoadedProgram LoadImplementation(IReadOnlyCollection<Shader> media, IReadOnlyCollection<string> paths = null)
+        public override LoadedProgram LoadImplementation(IReadOnlyList<Shader> media, IReadOnlyList<string> paths = null)
         {
             var shaderIds = new List<int>();
             var shaderIndex = 0;
             foreach (var shaderType in _configuration.ShaderTypes)
             {
-                shaderIds.Add(CompileShader(media.ElementAt(shaderIndex++), shaderType));
+                shaderIds.Add(CompileShader(media[shaderIndex++], shaderType));
             }
 
             var programId = GL.CreateProgram();

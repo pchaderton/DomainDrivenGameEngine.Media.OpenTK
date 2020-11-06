@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using DomainDrivenGameEngine.Media.Models;
 
 namespace DomainDrivenGameEngine.Media.OpenTK.Models
@@ -25,8 +26,8 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
                           int vertexBufferLength,
                           int indexBufferId,
                           int indexBufferLength,
-                          IReadOnlyCollection<IMediaReference<Texture>> textureReferences,
-                          IReadOnlyCollection<TextureUsageType> textureUsageTypes,
+                          ReadOnlyCollection<IMediaReference<Texture>> textureReferences,
+                          ReadOnlyCollection<TextureUsageType> textureUsageTypes,
                           BlendMode defaultBlendMode = BlendMode.None)
         {
             if (vertexArrayId <= 0)
@@ -59,8 +60,8 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
             VertexBufferLength = vertexBufferLength;
             IndexBufferId = indexBufferId;
             IndexBufferLength = indexBufferLength;
-            TextureReferences = textureReferences ?? new IMediaReference<Texture>[] { };
-            TextureUsageTypes = textureUsageTypes ?? new TextureUsageType[] { };
+            TextureReferences = textureReferences ?? new ReadOnlyCollection<IMediaReference<Texture>>(new IMediaReference<Texture>[0]);
+            TextureUsageTypes = textureUsageTypes ?? new ReadOnlyCollection<TextureUsageType>(new TextureUsageType[0]);
             DefaultBlendMode = defaultBlendMode;
         }
 
@@ -82,12 +83,12 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
         /// <summary>
         /// Gets the texture references to use for rendering the mesh.
         /// </summary>
-        public IReadOnlyCollection<IMediaReference<Texture>> TextureReferences { get; }
+        public IReadOnlyList<IMediaReference<Texture>> TextureReferences { get; }
 
         /// <summary>
         /// Gets the usage type hints for each texture referenced by the mesh.
         /// </summary>
-        public IReadOnlyCollection<TextureUsageType> TextureUsageTypes { get; }
+        public IReadOnlyList<TextureUsageType> TextureUsageTypes { get; }
 
         /// <summary>
         /// Gets the OpenGL vertex array ID to use for rendering the mesh.

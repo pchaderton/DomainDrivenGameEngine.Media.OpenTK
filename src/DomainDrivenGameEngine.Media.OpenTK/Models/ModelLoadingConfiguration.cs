@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace DomainDrivenGameEngine.Media.OpenTK.Models
 {
@@ -43,9 +45,9 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
         /// </summary>
         /// <param name="enabledVertexAttributes">The in-order vertex attributes to apply to generated vertex buffers.</param>
         /// <param name="enabledBoneCount">The number of bones that can affect each vertex.</param>
-        public ModelLoadingConfiguration(IReadOnlyCollection<VertexAttribute> enabledVertexAttributes, byte enabledBoneCount)
+        public ModelLoadingConfiguration(IEnumerable<VertexAttribute> enabledVertexAttributes, byte enabledBoneCount)
         {
-            EnabledVertexAttributes = enabledVertexAttributes ?? throw new ArgumentNullException(nameof(enabledVertexAttributes));
+            EnabledVertexAttributes = new ReadOnlyCollection<VertexAttribute>(enabledVertexAttributes?.ToArray() ?? throw new ArgumentNullException(nameof(enabledVertexAttributes)));
             EnabledBoneCount = enabledBoneCount;
         }
 
@@ -57,6 +59,6 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
         /// <summary>
         /// Gets the in-order vertex attributes to apply to generated vertex buffers.
         /// </summary>
-        public IReadOnlyCollection<VertexAttribute> EnabledVertexAttributes { get; }
+        public IReadOnlyList<VertexAttribute> EnabledVertexAttributes { get; }
     }
 }

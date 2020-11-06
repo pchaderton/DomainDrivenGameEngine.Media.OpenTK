@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using DomainDrivenGameEngine.Media.Models;
 using DomainDrivenGameEngine.Media.OpenTK.Models;
@@ -42,26 +43,26 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         }
 
         /// <inheritdoc/>
-        public override LoadedTexture LoadImplementation(IReadOnlyCollection<Texture> media, IReadOnlyCollection<string> paths = null)
+        public override LoadedTexture LoadImplementation(IReadOnlyList<Texture> media, IReadOnlyList<string> paths = null)
         {
             if (media.Count == 6)
             {
-                return LoadCubeMapTexture(media.ElementAt(0),
-                                          media.ElementAt(1),
-                                          media.ElementAt(2),
-                                          media.ElementAt(3),
-                                          media.ElementAt(4),
-                                          media.ElementAt(5));
+                return LoadCubeMapTexture(media[0],
+                                          media[1],
+                                          media[2],
+                                          media[3],
+                                          media[4],
+                                          media[5]);
             }
             else if (media.Count >= 2 && media.Count <= 4)
             {
-                return LoadPackedTexture(media.ElementAt(0),
-                                         media.ElementAt(1),
-                                         media.ElementAtOrDefault(2),
-                                         media.ElementAtOrDefault(3));
+                return LoadPackedTexture(media[0],
+                                         media[1],
+                                         media.Count > 2 ? media[2] : null,
+                                         media.Count > 3 ? media[3] : null);
             }
 
-            return LoadSingleTexture(media.First());
+            return LoadSingleTexture(media[0]);
         }
 
         /// <inheritdoc/>
@@ -200,7 +201,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
 
             for (var index = 0; index < 4; index++)
             {
-                var sourceTexture = textures.ElementAtOrDefault(index);
+                var sourceTexture = textures.Length > index ? textures[index] : null;
                 if (sourceTexture != null)
                 {
                     var pixelFormatDetails = PixelFormatDetailsAttribute.GetPixelFormatDetails(sourceTexture.Format);
@@ -223,7 +224,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                 }
             }
 
-            return LoadSingleTexture(new Texture(expectedWidth, expectedHeight, DomainPixelFormat.Rgba8, bytes));
+            return LoadSingleTexture(new Texture(expectedWidth, expectedHeight, DomainPixelFormat.Rgba8, new ReadOnlyCollection<byte>(bytes)));
         }
 
         /// <summary>

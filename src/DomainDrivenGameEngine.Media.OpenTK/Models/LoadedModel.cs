@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using DomainDrivenGameEngine.Media.Models;
 
 namespace DomainDrivenGameEngine.Media.OpenTK.Models
@@ -20,7 +21,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
         /// <param name="meshes">The meshes in this model.</param>
         /// <param name="skeletonRoot">The skeleton root for the model.</param>
         /// <param name="animationCollectionReference">The reference to the animation collection that was loaded with this model.</param>
-        public LoadedModel(IReadOnlyCollection<LoadedMesh> meshes,
+        public LoadedModel(ReadOnlyCollection<LoadedMesh> meshes,
                            LoadedBone skeletonRoot = null,
                            IMediaReference<AnimationCollection> animationCollectionReference = null)
         {
@@ -43,7 +44,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
         /// <summary>
         /// Gets the meshes in this model.
         /// </summary>
-        public IReadOnlyCollection<LoadedMesh> Meshes { get; }
+        public IReadOnlyList<LoadedMesh> Meshes { get; }
 
         /// <summary>
         /// Gets the skeleton root of this model.

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using DomainDrivenGameEngine.Media.Models;
 using DomainDrivenGameEngine.Media.OpenTK.Models;
@@ -86,12 +87,12 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         }
 
         /// <inheritdoc/>
-        public override LoadedModel LoadImplementation(IReadOnlyCollection<Model> media, IReadOnlyCollection<string> paths = null)
+        public override LoadedModel LoadImplementation(IReadOnlyList<Model> media, IReadOnlyList<string> paths = null)
         {
             var referencedTextures = new List<IMediaReference<Texture>>();
             var referencedShaders = new List<IMediaReference<Shader>>();
-            var model = media.ElementAt(0);
-            var path = paths?.ElementAtOrDefault(0);
+            var model = media[0];
+            var path = paths.Count > 0 ? paths[0] : null;
             var loadedMeshes = new List<LoadedMesh>();
 
             var embeddedTextureReferences = new List<IMediaReference<Texture>>();
@@ -105,8 +106,8 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                 }
             }
 
-            var animationCollectionReference = model.AnimationCollection != null
-                ? _animationCollectionReferenceService.Reference(model.AnimationCollection)
+            var animationCollectionReference = model.EmbeddedAnimationCollection != null
+                ? _animationCollectionReferenceService.Reference(model.EmbeddedAnimationCollection)
                 : null;
 
             foreach (var mesh in model.Meshes)
@@ -186,13 +187,13 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                     }
                     else if (enabledVertexAttribute == VertexAttribute.BoneIndices)
                     {
-                        arrayFactoriesWithTypeSizeTuples.Add(new Tuple<Func<Array>, VertexAttribPointerType, int>(() => mesh.Vertices.SelectMany(vertex => Enumerable.Range(0, _configuration.EnabledBoneCount).Select(i => vertex.BoneIndices != null && vertex.BoneIndices.Count > i ? vertex.BoneIndices.ElementAt(i) : 0)).ToArray(),
+                        arrayFactoriesWithTypeSizeTuples.Add(new Tuple<Func<Array>, VertexAttribPointerType, int>(() => mesh.Vertices.SelectMany(vertex => Enumerable.Range(0, _configuration.EnabledBoneCount).Select(i => vertex.BoneIndices != null && vertex.BoneIndices.Count > i ? vertex.BoneIndices[i] : 0)).ToArray(),
                                                                                                                   VertexAttribPointerType.Int,
                                                                                                                   _configuration.EnabledBoneCount));
                     }
                     else if (enabledVertexAttribute == VertexAttribute.BoneWeights)
                     {
-                        arrayFactoriesWithTypeSizeTuples.Add(new Tuple<Func<Array>, VertexAttribPointerType, int>(() => mesh.Vertices.SelectMany(vertex => Enumerable.Range(0, _configuration.EnabledBoneCount).Select(i => vertex.BoneIndices != null && vertex.BoneWeights.Count > i ? vertex.BoneWeights.ElementAt(i) : 0.0f)).ToArray(),
+                        arrayFactoriesWithTypeSizeTuples.Add(new Tuple<Func<Array>, VertexAttribPointerType, int>(() => mesh.Vertices.SelectMany(vertex => Enumerable.Range(0, _configuration.EnabledBoneCount).Select(i => vertex.BoneIndices != null && vertex.BoneWeights.Count > i ? vertex.BoneWeights[i] : 0.0f)).ToArray(),
                                                                                                                   VertexAttribPointerType.Float,
                                                                                                                   _configuration.EnabledBoneCount));
                     }
@@ -244,8 +245,8 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                                                 vertexBufferLength,
                                                 indexBufferId,
                                                 indexBufferLength,
-                                                textureReferences,
-                                                textureUsageTypes,
+                                                new ReadOnlyCollection<IMediaReference<Texture>>(textureReferences.ToArray()),
+                                                new ReadOnlyCollection<TextureUsageType>(textureUsageTypes.ToArray()),
                                                 mesh.DefaultBlendMode));
             }
 
@@ -253,7 +254,9 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                 ? GetLoadedSkeleton(model.SkeletonRoot, Matrix4.Identity)
                 : null;
 
-            var loadedModel = new LoadedModel(loadedMeshes, loadedSkeleton, animationCollectionReference);
+            var loadedModel = new LoadedModel(new ReadOnlyCollection<LoadedMesh>(loadedMeshes.ToArray()),
+                                              loadedSkeleton,
+                                              animationCollectionReference);
 
             if (referencedTextures.Count > 0)
             {
@@ -370,7 +373,9 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                 loadedChildren.Add(GetLoadedSkeleton(child, boneGlobalOffsetMatrix));
             }
 
-            return new LoadedBone(bone.Name, worldToBindMatrix, loadedChildren);
+            return new LoadedBone(bone.Name,
+                                  worldToBindMatrix,
+                                  new ReadOnlyCollection<LoadedBone>(loadedChildren.ToArray()));
         }
     }
 }

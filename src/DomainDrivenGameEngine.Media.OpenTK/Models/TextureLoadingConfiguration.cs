@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Drawing;
 using OpenTK.Graphics.OpenGL4;
 
@@ -42,13 +43,13 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
         /// <param name="cubeMapTextureParameters">A dictionary containing the parameters to apply to loaded cube map textures.</param>
         /// <param name="generateMipmaps">A value indicating whether or not mipmaps should be generated for loaded textures.</param>
         /// <param name="defaultPackedTextureColor">The default color to apply to for channels that aren't provided a source texture for a packed texture.</param>
-        public TextureLoadingConfiguration(IReadOnlyDictionary<TextureParameterName, int> textureParameters,
-                                           IReadOnlyDictionary<TextureParameterName, int> cubeMapTextureParameters = null,
+        public TextureLoadingConfiguration(IDictionary<TextureParameterName, int> textureParameters,
+                                           IDictionary<TextureParameterName, int> cubeMapTextureParameters = null,
                                            bool generateMipmaps = true,
                                            Color? defaultPackedTextureColor = null)
         {
-            TextureParameters = textureParameters ?? throw new ArgumentNullException(nameof(textureParameters));
-            CubeMapTextureParameters = cubeMapTextureParameters ?? textureParameters;
+            TextureParameters = new ReadOnlyDictionary<TextureParameterName, int>(textureParameters ?? throw new ArgumentNullException(nameof(textureParameters)));
+            CubeMapTextureParameters = new ReadOnlyDictionary<TextureParameterName, int>(cubeMapTextureParameters ?? textureParameters);
             GenerateMipmaps = generateMipmaps;
             DefaultPackedTextureColor = defaultPackedTextureColor ?? Color.White;
         }

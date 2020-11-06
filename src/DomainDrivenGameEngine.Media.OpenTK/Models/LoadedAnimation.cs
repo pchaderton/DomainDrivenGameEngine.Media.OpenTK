@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 
 namespace DomainDrivenGameEngine.Media.OpenTK.Models
 {
@@ -21,7 +21,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
         /// <param name="name">The name of this animation.</param>
         /// <param name="channels">The channels in this animation.</param>
         /// <param name="durationInSeconds">The duration of the animation in seconds.</param>
-        public LoadedAnimation(string name, IReadOnlyCollection<LoadedChannel> channels, double durationInSeconds)
+        public LoadedAnimation(string name, ReadOnlyCollection<LoadedChannel> channels, double durationInSeconds)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
             Channels = channels ?? throw new ArgumentNullException(nameof(channels));
@@ -32,7 +32,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
         /// <summary>
         /// Gets the channels in this animation.
         /// </summary>
-        public IReadOnlyCollection<LoadedChannel> Channels { get; }
+        public IReadOnlyList<LoadedChannel> Channels { get; }
 
         /// <summary>
         /// Gets the duration of the animation in seconds.

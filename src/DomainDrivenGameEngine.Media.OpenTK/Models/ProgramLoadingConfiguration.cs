@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using OpenTK.Graphics.OpenGL4;
 
 namespace DomainDrivenGameEngine.Media.OpenTK.Models
@@ -19,9 +21,9 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
         /// </summary>
         /// <param name="shaderTypes">The shader types to load into a program.</param>
         /// <param name="shaderExtension">The file extension to use for identifying shaders to load, defaults to ".glsl".</param>
-        public ProgramLoadingConfiguration(IReadOnlyCollection<ShaderType> shaderTypes, string shaderExtension = ".glsl")
+        public ProgramLoadingConfiguration(IEnumerable<ShaderType> shaderTypes, string shaderExtension = ".glsl")
         {
-            ShaderTypes = shaderTypes ?? throw new ArgumentNullException(nameof(shaderTypes));
+            ShaderTypes = new ReadOnlyCollection<ShaderType>(shaderTypes?.ToArray() ?? throw new ArgumentNullException(nameof(shaderTypes)));
             ShaderExtension = shaderExtension;
 
             if (ShaderTypes.Count == 0)
@@ -38,6 +40,6 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
         /// <summary>
         /// Gets the shader types to load into a program.
         /// </summary>
-        public IReadOnlyCollection<ShaderType> ShaderTypes { get; }
+        public IReadOnlyList<ShaderType> ShaderTypes { get; }
     }
 }

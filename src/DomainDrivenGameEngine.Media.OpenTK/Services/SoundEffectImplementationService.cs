@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using DomainDrivenGameEngine.Media.Models;
 using DomainDrivenGameEngine.Media.OpenTK.Models;
 using DomainDrivenGameEngine.Media.Services;
@@ -20,9 +19,9 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         }
 
         /// <inheritdoc/>
-        public override LoadedSoundEffect LoadImplementation(IReadOnlyCollection<SoundEffect> media, IReadOnlyCollection<string> paths = null)
+        public override LoadedSoundEffect LoadImplementation(IReadOnlyList<SoundEffect> media, IReadOnlyList<string> paths = null)
         {
-            var soundEffect = media.First();
+            var soundEffect = media[0];
 
             var bufferId = AL.GenBuffer();
 

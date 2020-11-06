@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using DomainDrivenGameEngine.Media.Models;
 using OpenTK.Mathematics;
 
@@ -18,9 +19,9 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
         /// <param name="offsetKeyFrames">The offset keyframes for this channel.</param>
         /// <param name="scaleKeyFrames">The scaling keyframes for this channel.</param>
         public LoadedChannel(string boneName,
-                             IReadOnlyCollection<KeyFrame<Quaternion>> rotationKeyFrames,
-                             IReadOnlyCollection<KeyFrame<Vector3>> offsetKeyFrames,
-                             IReadOnlyCollection<KeyFrame<Vector3>> scaleKeyFrames)
+                             ReadOnlyCollection<KeyFrame<Quaternion>> rotationKeyFrames,
+                             ReadOnlyCollection<KeyFrame<Vector3>> offsetKeyFrames,
+                             ReadOnlyCollection<KeyFrame<Vector3>> scaleKeyFrames)
         {
             BoneName = boneName ?? throw new ArgumentNullException(nameof(boneName));
             RotationKeyFrames = rotationKeyFrames ?? throw new ArgumentNullException(nameof(rotationKeyFrames));
@@ -36,16 +37,16 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
         /// <summary>
         /// Gets the offset keyframes for this channel.
         /// </summary>
-        public IReadOnlyCollection<KeyFrame<Vector3>> OffsetKeyFrames { get; }
+        public IReadOnlyList<KeyFrame<Vector3>> OffsetKeyFrames { get; }
 
         /// <summary>
         /// Gets the rotation keyframes for this channel.
         /// </summary>
-        public IReadOnlyCollection<KeyFrame<Quaternion>> RotationKeyFrames { get; }
+        public IReadOnlyList<KeyFrame<Quaternion>> RotationKeyFrames { get; }
 
         /// <summary>
         /// Gets the scale keyframes for this channel.
         /// </summary>
-        public IReadOnlyCollection<KeyFrame<Vector3>> ScaleKeyFrames { get; }
+        public IReadOnlyList<KeyFrame<Vector3>> ScaleKeyFrames { get; }
     }
 }

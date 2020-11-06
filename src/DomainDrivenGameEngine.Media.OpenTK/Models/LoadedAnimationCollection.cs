@@ -20,8 +20,8 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
         /// Initializes a new instance of the <see cref="LoadedAnimationCollection"/> class.
         /// </summary>
         /// <param name="animations">The animations in this animation set.</param>
-        public LoadedAnimationCollection(IReadOnlyCollection<LoadedAnimation> animations)
-            : base(animations?.ToList() ?? throw new ArgumentNullException(nameof(animations)))
+        public LoadedAnimationCollection(IList<LoadedAnimation> animations)
+            : base(animations ?? throw new ArgumentNullException(nameof(animations)))
         {
             _animationsByName = this.ToDictionary(a => a.Name);
         }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using OpenTK.Mathematics;
 
 namespace DomainDrivenGameEngine.Media.OpenTK.Models
@@ -15,7 +16,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
         /// <param name="name">The bone name.</param>
         /// <param name="worldToBindMatrix">The matrix used to convert from world space to bind space.</param>
         /// <param name="children">The child bones under this bone.  Each bone in this collection will have their parent set.</param>
-        public LoadedBone(string name, Matrix4 worldToBindMatrix, IReadOnlyCollection<LoadedBone> children)
+        public LoadedBone(string name, Matrix4 worldToBindMatrix, ReadOnlyCollection<LoadedBone> children)
         {
             Name = name ?? throw new ArgumentNullException(nameof(name));
             WorldToBindMatrix = worldToBindMatrix;
@@ -31,7 +32,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Models
         /// <summary>
         /// Gets the child bones under this bone.
         /// </summary>
-        public IReadOnlyCollection<LoadedBone> Children { get; }
+        public IReadOnlyList<LoadedBone> Children { get; }
 
         /// <summary>
         /// Gets the bone name.
