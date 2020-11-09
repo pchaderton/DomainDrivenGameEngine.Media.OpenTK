@@ -188,7 +188,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                     else if (enabledVertexAttribute == VertexAttribute.BoneIndices)
                     {
                         arrayFactoriesWithTypeSizeTuples.Add(new Tuple<Func<Array>, VertexAttribPointerType, int>(() => mesh.Vertices.SelectMany(vertex => Enumerable.Range(0, _configuration.EnabledBoneCount).Select(i => vertex.BoneIndices != null && vertex.BoneIndices.Count > i ? vertex.BoneIndices[i] : 0)).ToArray(),
-                                                                                                                  VertexAttribPointerType.Int,
+                                                                                                                  VertexAttribPointerType.UnsignedInt,
                                                                                                                   _configuration.EnabledBoneCount));
                     }
                     else if (enabledVertexAttribute == VertexAttribute.BoneWeights)
@@ -232,7 +232,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                     if (IsIntegerVertexAttribute(tuple.Item1))
                     {
                         // Integer based types need to handled strictly or else they get converted into floats, which can be a bad time when using them for bone indices.
-                        GL.VertexAttribIPointer(i, tuple.Item2, VertexAttribIntegerType.Int, tuple.Item2 * GetSizeOfVertexAttribute(tuple.Item1), (IntPtr)tuple.Item3);
+                        GL.VertexAttribIPointer(i, tuple.Item2, (VertexAttribIntegerType)tuple.Item1, tuple.Item2 * GetSizeOfVertexAttribute(tuple.Item1), (IntPtr)tuple.Item3);
                     }
                     else
                     {
@@ -300,16 +300,17 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         /// <returns>The resulting size of each element of a given <see cref="VertexAttribPointerType"/>.</returns>
         private int GetSizeOfVertexAttribute(VertexAttribPointerType attributeType)
         {
-            if (attributeType == VertexAttribPointerType.Float)
+            switch (attributeType)
             {
-                return sizeof(float);
+                case VertexAttribPointerType.Float:
+                    return sizeof(float);
+                case VertexAttribPointerType.Int:
+                    return sizeof(int);
+                case VertexAttribPointerType.UnsignedInt:
+                    return sizeof(uint);
+                default:
+                    throw new ArgumentException($"Unrecognized {nameof(VertexAttribPointerType)}: {attributeType.ToString()}");
             }
-            else if (attributeType == VertexAttribPointerType.Int)
-            {
-                return sizeof(int);
-            }
-
-            throw new ArgumentException($"Unrecognized {nameof(VertexAttribPointerType)}: {attributeType.ToString()}");
         }
 
         /// <summary>
@@ -319,7 +320,8 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         /// <returns><c>true</c> if it is an integer based type.</returns>
         private bool IsIntegerVertexAttribute(VertexAttribPointerType attributeType)
         {
-            return attributeType == VertexAttribPointerType.Int;
+            return attributeType == VertexAttribPointerType.Int ||
+                attributeType == VertexAttribPointerType.UnsignedInt;
         }
 
         /// <summary>
