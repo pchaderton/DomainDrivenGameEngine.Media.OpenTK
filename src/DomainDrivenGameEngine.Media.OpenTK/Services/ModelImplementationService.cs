@@ -54,13 +54,13 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         /// Initializes a new instance of the <see cref="ModelImplementationService"/> class.
         /// </summary>
         /// <param name="textureLoadingService">The <see cref="IMediaLoadingService{Texture, LoadedTexture}"/> to use to reference textures.</param>
-        /// <param name="animationCollectionLoadingService">The <see cref="IMediaLoadingService{AnimationCollection, LoadedAnimationCollection}"/> to use to reference animation collections.</param>
+        /// <param name="animationCollectionReferenceService">The <see cref="IMediaReferenceService{AnimationCollection}"/> to use to reference animation collections.</param>
         /// <param name="fileAccessService">The <see cref="IFileAccessService"/> to use for accessing files and manipulating paths.</param>
         public ModelImplementationService(IMediaLoadingService<Texture, LoadedTexture> textureLoadingService,
-                                          IMediaLoadingService<AnimationCollection, LoadedAnimationCollection> animationCollectionLoadingService,
+                                          IMediaReferenceService<AnimationCollection> animationCollectionReferenceService,
                                           IFileAccessService fileAccessService)
             : this(textureLoadingService,
-                   animationCollectionLoadingService,
+                   animationCollectionReferenceService,
                    fileAccessService,
                    ModelLoadingConfiguration.DefaultStatic)
         {
@@ -70,16 +70,16 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         /// Initializes a new instance of the <see cref="ModelImplementationService"/> class.
         /// </summary>
         /// <param name="textureLoadingService">The <see cref="IMediaLoadingService{Texture, LoadedTexture}"/> to use to reference textures.</param>
-        /// <param name="animationCollectionLoadingService">The <see cref="IMediaLoadingService{AnimationCollection, LoadedAnimationCollection}"/> to use to reference animation collections.</param>
+        /// <param name="animationCollectionReferenceService">The <see cref="IMediaReferenceService{AnimationCollection}"/> to use to reference animation collections.</param>
         /// <param name="fileAccessService">The <see cref="IFileAccessService"/> to use for accessing files and manipulating paths.</param>
         /// <param name="configuration">The <see cref="ModelLoadingConfiguration"/> to use when loading models.</param>
         public ModelImplementationService(IMediaLoadingService<Texture, LoadedTexture> textureLoadingService,
-                                          IMediaLoadingService<AnimationCollection, LoadedAnimationCollection> animationCollectionLoadingService,
+                                          IMediaReferenceService<AnimationCollection> animationCollectionReferenceService,
                                           IFileAccessService fileAccessService,
                                           ModelLoadingConfiguration configuration)
         {
             _textureReferenceService = textureLoadingService ?? throw new ArgumentNullException(nameof(textureLoadingService));
-            _animationCollectionReferenceService = animationCollectionLoadingService ?? throw new ArgumentNullException(nameof(animationCollectionLoadingService));
+            _animationCollectionReferenceService = animationCollectionReferenceService ?? throw new ArgumentNullException(nameof(animationCollectionReferenceService));
             _fileAccessService = fileAccessService ?? throw new ArgumentNullException(nameof(fileAccessService));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _textureReferencesByModelId = new Dictionary<long, IReadOnlyCollection<IMediaReference<Texture>>>();
