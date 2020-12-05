@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using DomainDrivenGameEngine.Media.Loaders;
 using DomainDrivenGameEngine.Media.Models;
 using DomainDrivenGameEngine.Media.OpenTK.Models;
-using DomainDrivenGameEngine.Media.Services;
 using OpenTK.Graphics.OpenGL4;
 
-namespace DomainDrivenGameEngine.Media.OpenTK.Services
+namespace DomainDrivenGameEngine.Media.OpenTK.Loaders
 {
     /// <summary>
     /// A service for loading shader programs for use with OpenTK 4.0+.
@@ -14,7 +14,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
     /// If no configuration is provided, uses a default configuration which assumes each program
     /// needs a vertex shader and a fragment shader.
     /// </remarks>
-    public class ProgramImplementationService : BaseMediaImplementationService<Shader, LoadedProgram>
+    public class ProgramLoader : BaseMediaLoader<Shader, LoadedProgram>
     {
         /// <summary>
         /// The <see cref="ProgramLoadingConfiguration"/> to use for loading programs.
@@ -22,25 +22,17 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         private readonly ProgramLoadingConfiguration _configuration;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ProgramImplementationService"/> class.
-        /// </summary>
-        public ProgramImplementationService()
-            : this(ProgramLoadingConfiguration.Default)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ProgramImplementationService"/> class.
+        /// Initializes a new instance of the <see cref="ProgramLoader"/> class.
         /// </summary>
         /// <param name="configuration">The <see cref="ProgramLoadingConfiguration"/> to use for loading programs.</param>
-        public ProgramImplementationService(ProgramLoadingConfiguration configuration)
+        public ProgramLoader(ProgramLoadingConfiguration configuration)
             : base(new uint[] { (uint)configuration.ShaderTypes.Count })
         {
             _configuration = configuration;
         }
 
         /// <inheritdoc/>
-        public override LoadedProgram LoadImplementation(IReadOnlyList<Shader> media, IReadOnlyList<string> paths = null)
+        public override LoadedProgram Load(IReadOnlyList<Shader> media, IReadOnlyList<string> paths = null)
         {
             var shaderIds = new List<int>();
             var shaderIndex = 0;
@@ -68,7 +60,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         }
 
         /// <inheritdoc/>
-        public override void UnloadImplementation(LoadedProgram implementation)
+        public override void Unload(LoadedProgram implementation)
         {
             GL.DeleteProgram(implementation.ProgramId);
         }

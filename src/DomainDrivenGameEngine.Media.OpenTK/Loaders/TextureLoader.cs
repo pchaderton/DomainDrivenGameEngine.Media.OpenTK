@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
+using DomainDrivenGameEngine.Media.Loaders;
 using DomainDrivenGameEngine.Media.Models;
 using DomainDrivenGameEngine.Media.OpenTK.Models;
-using DomainDrivenGameEngine.Media.Services;
 using OpenTK.Graphics.OpenGL4;
-using DomainPixelFormat = DomainDrivenGameEngine.Media.Models.PixelFormat;
-using OpenTKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
-namespace DomainDrivenGameEngine.Media.OpenTK.Services
+namespace DomainDrivenGameEngine.Media.OpenTK.Loaders
 {
     /// <summary>
     /// A service for loading textures for use with OpenTK 4.0+.  Supports loading individual textures, cube map textures and packed textures from two, three or four sources.
@@ -17,7 +16,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
     /// <remarks>
     /// When loading cube map textures, six textures must be provided in the following order: xpos, xneg, ypos, yneg, zpos, zneg.
     /// </remarks>
-    public class TextureImplementationService : BaseMediaImplementationService<Texture, LoadedTexture>
+    public class TextureLoader : BaseMediaLoader<Texture, LoadedTexture>
     {
         /// <summary>
         /// The <see cref="TextureLoadingConfiguration"/> to use when loading textures.
@@ -25,25 +24,17 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         private readonly TextureLoadingConfiguration _configuration;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TextureImplementationService"/> class.
-        /// </summary>
-        public TextureImplementationService()
-            : this(TextureLoadingConfiguration.Default)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="TextureImplementationService"/> class.
+        /// Initializes a new instance of the <see cref="TextureLoader"/> class.
         /// </summary>
         /// <param name="configuration">The <see cref="TextureLoadingConfiguration"/> to use when loading textures.</param>
-        public TextureImplementationService(TextureLoadingConfiguration configuration)
+        public TextureLoader(TextureLoadingConfiguration configuration)
             : base(new uint[] { 1, 2, 3, 4, 6 })
         {
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
         /// <inheritdoc/>
-        public override LoadedTexture LoadImplementation(IReadOnlyList<Texture> media, IReadOnlyList<string> paths = null)
+        public override LoadedTexture Load(IReadOnlyList<Texture> media, IReadOnlyList<string> paths = null)
         {
             if (media.Count == 6)
             {
@@ -66,7 +57,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         }
 
         /// <inheritdoc/>
-        public override void UnloadImplementation(LoadedTexture implementation)
+        public override void Unload(LoadedTexture implementation)
         {
             GL.DeleteTexture(implementation.TextureId);
         }
@@ -74,10 +65,10 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         /// <summary>
         /// Asserts that a pixel format is one this service supports loading.
         /// </summary>
-        /// <param name="pixelFormat">The <see cref="DomainPixelFormat"/> to assert against.</param>
-        private void AssertSupportedPixelFormat(DomainPixelFormat pixelFormat)
+        /// <param name="pixelFormat">The <see cref="TextureFormat"/> to assert against.</param>
+        private void AssertSupportedPixelFormat(TextureFormat pixelFormat)
         {
-            if (pixelFormat == DomainPixelFormat.Rgb8 || pixelFormat == DomainPixelFormat.Rgba8)
+            if (pixelFormat == TextureFormat.Rgb24 || pixelFormat == TextureFormat.Rgba32)
             {
                 return;
             }
@@ -99,11 +90,11 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         }
 
         /// <summary>
-        /// Converts an array of bytes using <see cref="DomainPixelFormat"/> Rgb8 to Rgba8.
+        /// Converts an array of bytes using <see cref="TextureFormat"/> Rgb24 to Rgba32.
         /// </summary>
         /// <param name="bytes">The array of bytes to convert.</param>
         /// <returns>The converted array of bytes.</returns>
-        private byte[] ConvertBytesToRgba8(byte[] bytes)
+        private byte[] ConvertBytesToRgba32(byte[] bytes)
         {
             var newBytes = new byte[bytes.Length / 3 * 4];
             for (int newIndex = 0, oldIndex = 0; newIndex < newBytes.Length; newIndex += 4, oldIndex += 3)
@@ -142,13 +133,19 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
             for (var index = 0; index < 6; index++)
             {
                 var texture = textures[index];
-                var bytes = texture.Bytes.ToArray();
-                if (texture.Format == DomainPixelFormat.Rgb8)
+                byte[] bytes = null;
+                using (var memoryStream = new MemoryStream())
                 {
-                    bytes = ConvertBytesToRgba8(bytes);
+                    texture.Stream.CopyTo(memoryStream);
+                    bytes = memoryStream.ToArray();
                 }
 
-                GL.TexImage2D(TextureTarget.TextureCubeMapPositiveX + index, 0, PixelInternalFormat.Rgba, texture.Width, texture.Height, 0, OpenTKPixelFormat.Rgba, PixelType.UnsignedByte, bytes);
+                if (texture.Format == TextureFormat.Rgb24)
+                {
+                    bytes = ConvertBytesToRgba32(bytes);
+                }
+
+                GL.TexImage2D(TextureTarget.TextureCubeMapPositiveX + index, 0, PixelInternalFormat.Rgba, texture.Width, texture.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, bytes);
             }
 
             if (_configuration.GenerateMipmaps)
@@ -204,9 +201,14 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                 var sourceTexture = textures.Length > index ? textures[index] : null;
                 if (sourceTexture != null)
                 {
-                    var pixelFormatDetails = PixelFormatDetailsAttribute.GetPixelFormatDetails(sourceTexture.Format);
-                    var bytesPerPixel = pixelFormatDetails.BytesPerPixel;
-                    var sourceBytes = sourceTexture.Bytes.ToArray();
+                    byte[] sourceBytes = null;
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        sourceTexture.Stream.CopyTo(memoryStream);
+                        sourceBytes = memoryStream.ToArray();
+                    }
+
+                    var bytesPerPixel = sourceTexture.Format == TextureFormat.Rgba32 ? 4 : 3;
                     var sourceIndex = 0;
                     for (var destIndex = index; destIndex < bytes.Length; destIndex += 4)
                     {
@@ -224,7 +226,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                 }
             }
 
-            return LoadSingleTexture(new Texture(expectedWidth, expectedHeight, DomainPixelFormat.Rgba8, new ReadOnlyCollection<byte>(bytes)));
+            return LoadSingleTexture(new Texture(expectedWidth, expectedHeight, TextureFormat.Rgba32, new ReadOnlyCollection<byte>(bytes)));
         }
 
         /// <summary>
@@ -240,15 +242,21 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
 
             GL.BindTexture(TextureTarget.Texture2D, textureId);
 
-            byte[] bytes = texture.Bytes.ToArray();
-            if (texture.Format == DomainPixelFormat.Rgb8)
+            byte[] bytes = null;
+            using (var memoryStream = new MemoryStream())
             {
-                bytes = ConvertBytesToRgba8(bytes);
+                texture.Stream.CopyTo(memoryStream);
+                bytes = memoryStream.ToArray();
+            }
+
+            if (texture.Format == TextureFormat.Rgb24)
+            {
+                bytes = ConvertBytesToRgba32(bytes);
             }
 
             // Don't generate extra storage for textures that are too small to properly utilize it.
             GL.TexStorage2D(TextureTarget2d.Texture2D, texture.Width >= 16 && texture.Height >= 16 ? 4 : 1, SizedInternalFormat.Rgba8, texture.Width, texture.Height);
-            GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, texture.Width, texture.Height, OpenTKPixelFormat.Rgba, PixelType.UnsignedByte, bytes);
+            GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, texture.Width, texture.Height, PixelFormat.Rgba, PixelType.UnsignedByte, bytes);
 
             if (_configuration.GenerateMipmaps)
             {

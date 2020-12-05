@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using DomainDrivenGameEngine.Media.Loaders;
 using DomainDrivenGameEngine.Media.Models;
 using DomainDrivenGameEngine.Media.OpenTK.Models;
-using DomainDrivenGameEngine.Media.Services;
 using OpenTK.Audio.OpenAL;
 
-namespace DomainDrivenGameEngine.Media.OpenTK.Services
+namespace DomainDrivenGameEngine.Media.OpenTK.Loaders
 {
     /// <summary>
     /// A service for loading music for use with OpenTK 4.0+.
@@ -14,7 +14,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
     /// If no configuration is provided, uses a default configuration which assumes each music
     /// uses four 32kb buffers for streaming audio data.
     /// </remarks>
-    public class MusicImplementationService : BaseMediaImplementationService<Music, LoadedMusic>
+    public class MusicLoader : BaseMediaLoader<Music, LoadedMusic>
     {
         /// <summary>
         /// The <see cref="MusicLoadingConfiguration"/> to use for loading programs.
@@ -22,25 +22,17 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         private readonly MusicLoadingConfiguration _configuration;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="MusicImplementationService"/> class.
-        /// </summary>
-        public MusicImplementationService()
-            : this(MusicLoadingConfiguration.Default)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="MusicImplementationService"/> class.
+        /// Initializes a new instance of the <see cref="MusicLoader"/> class.
         /// </summary>
         /// <param name="configuration">The <see cref="MusicLoadingConfiguration"/> to use for loading music.</param>
-        public MusicImplementationService(MusicLoadingConfiguration configuration)
-            : base(isSourceStreamRequired: true)
+        public MusicLoader(MusicLoadingConfiguration configuration)
+            : base(null, true)
         {
             _configuration = configuration;
         }
 
         /// <inheritdoc/>
-        public override LoadedMusic LoadImplementation(IReadOnlyList<Music> media, IReadOnlyList<string> paths = null)
+        public override LoadedMusic Load(IReadOnlyList<Music> media, IReadOnlyList<string> paths = null)
         {
             var music = media[0];
 
@@ -62,7 +54,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
                 bufferIds.Add(bufferId);
             }
 
-            return new LoadedMusic(music.Stream,
+            return new LoadedMusic(music,
                                    bufferIds,
                                    _configuration.BufferSize,
                                    format,
@@ -70,7 +62,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         }
 
         /// <inheritdoc/>
-        public override void UnloadImplementation(LoadedMusic implementation)
+        public override void Unload(LoadedMusic implementation)
         {
             foreach (var bufferId in implementation.BufferIds)
             {
@@ -78,7 +70,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
             }
 
             // We need to manually dispose of the stream here as this service tells loading services to maintain it.
-            implementation.Stream.Dispose();
+            implementation.Dispose();
         }
     }
 }

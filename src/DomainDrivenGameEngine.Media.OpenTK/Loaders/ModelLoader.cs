@@ -2,14 +2,15 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using DomainDrivenGameEngine.Media.IO;
+using DomainDrivenGameEngine.Media.Loaders;
 using DomainDrivenGameEngine.Media.Models;
 using DomainDrivenGameEngine.Media.OpenTK.Models;
 using DomainDrivenGameEngine.Media.Services;
 using OpenTK.Graphics.OpenGL4;
-using OpenTK.Mathematics;
 using SystemBuffer = System.Buffer;
 
-namespace DomainDrivenGameEngine.Media.OpenTK.Services
+namespace DomainDrivenGameEngine.Media.OpenTK.Loaders
 {
     /// <summary>
     /// A service for loading models for use with OpenTK 4.0+.
@@ -18,7 +19,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
     /// The domain assumes that vertex texture coordinates start from the top at Y=0, which is opposite of what
     /// OpenGL assumes, so to compensate for that vertex texture coordinates need to be inverted.
     /// </remarks>
-    public class ModelImplementationService : BaseMediaImplementationService<Model, LoadedModel>
+    public class ModelLoader : BaseMediaLoader<Model, LoadedModel>
     {
         /// <summary>
         /// Any animation collections referenced for a model that had an implementation loaded.
@@ -36,9 +37,9 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         private readonly ModelLoadingConfiguration _configuration;
 
         /// <summary>
-        /// The <see cref="IFileAccessService"/> to use for accessing files and manipulating paths.
+        /// The <see cref="IFileSystem"/> to use for accessing files and manipulating paths.
         /// </summary>
-        private readonly IFileAccessService _fileAccessService;
+        private readonly IFileSystem _fileAccessService;
 
         /// <summary>
         /// Any textures referenced for a model that had an implementation loaded.
@@ -51,43 +52,27 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         private readonly IMediaReferenceService<Texture> _textureReferenceService;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ModelImplementationService"/> class.
+        /// Initializes a new instance of the <see cref="ModelLoader"/> class.
         /// </summary>
-        /// <param name="textureLoadingService">The <see cref="IMediaLoadingService{Texture, LoadedTexture}"/> to use to reference textures.</param>
+        /// <param name="textureStorageService">The <see cref="IMediaStorageService{Texture, LoadedTexture}"/> to use to reference textures.</param>
         /// <param name="animationCollectionReferenceService">The <see cref="IMediaReferenceService{AnimationCollection}"/> to use to reference animation collections.</param>
-        /// <param name="fileAccessService">The <see cref="IFileAccessService"/> to use for accessing files and manipulating paths.</param>
-        public ModelImplementationService(IMediaLoadingService<Texture, LoadedTexture> textureLoadingService,
-                                          IMediaReferenceService<AnimationCollection> animationCollectionReferenceService,
-                                          IFileAccessService fileAccessService)
-            : this(textureLoadingService,
-                   animationCollectionReferenceService,
-                   fileAccessService,
-                   ModelLoadingConfiguration.DefaultStatic)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ModelImplementationService"/> class.
-        /// </summary>
-        /// <param name="textureLoadingService">The <see cref="IMediaLoadingService{Texture, LoadedTexture}"/> to use to reference textures.</param>
-        /// <param name="animationCollectionReferenceService">The <see cref="IMediaReferenceService{AnimationCollection}"/> to use to reference animation collections.</param>
-        /// <param name="fileAccessService">The <see cref="IFileAccessService"/> to use for accessing files and manipulating paths.</param>
+        /// <param name="fileSystem">The <see cref="IFileSystem"/> to use for accessing files and manipulating paths.</param>
         /// <param name="configuration">The <see cref="ModelLoadingConfiguration"/> to use when loading models.</param>
-        public ModelImplementationService(IMediaLoadingService<Texture, LoadedTexture> textureLoadingService,
-                                          IMediaReferenceService<AnimationCollection> animationCollectionReferenceService,
-                                          IFileAccessService fileAccessService,
-                                          ModelLoadingConfiguration configuration)
+        public ModelLoader(IMediaStorageService<Texture, LoadedTexture> textureStorageService,
+                           IMediaReferenceService<AnimationCollection> animationCollectionReferenceService,
+                           IFileSystem fileSystem,
+                           ModelLoadingConfiguration configuration)
         {
-            _textureReferenceService = textureLoadingService ?? throw new ArgumentNullException(nameof(textureLoadingService));
+            _textureReferenceService = textureStorageService ?? throw new ArgumentNullException(nameof(textureStorageService));
             _animationCollectionReferenceService = animationCollectionReferenceService ?? throw new ArgumentNullException(nameof(animationCollectionReferenceService));
-            _fileAccessService = fileAccessService ?? throw new ArgumentNullException(nameof(fileAccessService));
+            _fileAccessService = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _textureReferencesByModelId = new Dictionary<long, IReadOnlyCollection<IMediaReference<Texture>>>();
             _animationCollectionReferencesByModelId = new Dictionary<long, IMediaReference<AnimationCollection>>();
         }
 
         /// <inheritdoc/>
-        public override LoadedModel LoadImplementation(IReadOnlyList<Model> media, IReadOnlyList<string> paths = null)
+        public override LoadedModel Load(IReadOnlyList<Model> media, IReadOnlyList<string> paths = null)
         {
             var referencedTextures = new List<IMediaReference<Texture>>();
             var referencedShaders = new List<IMediaReference<Shader>>();
@@ -263,7 +248,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Services
         }
 
         /// <inheritdoc/>
-        public override void UnloadImplementation(LoadedModel implementation)
+        public override void Unload(LoadedModel implementation)
         {
             if (_animationCollectionReferencesByModelId.TryGetValue(implementation.Id, out var referencedAnimationCollection))
             {

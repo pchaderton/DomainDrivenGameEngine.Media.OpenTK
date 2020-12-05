@@ -1,31 +1,31 @@
 ﻿using System.IO;
 using DomainDrivenGameEngine.Media.Models;
 using DomainDrivenGameEngine.Media.OpenTK.Models;
-using DomainDrivenGameEngine.Media.Services;
+using DomainDrivenGameEngine.Media.Readers;
 
-namespace DomainDrivenGameEngine.Media.OpenTK.Services
+namespace DomainDrivenGameEngine.Media.OpenTK.Readers
 {
     /// <summary>
-    /// A source for loading shaders.
+    /// A reader for reading shaders.
     /// </summary>
-    public class ShaderSourceService : BaseMediaSourceService<Shader>
+    public class ShaderReader : BaseMediaReader<Shader>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="ShaderSourceService"/> class.
+        /// Initializes a new instance of the <see cref="ShaderReader"/> class.
         /// </summary>
         /// <param name="configuration">The <see cref="ProgramLoadingConfiguration"/> to use for identifying what file extensions shaders have.</param>
-        public ShaderSourceService(ProgramLoadingConfiguration configuration)
+        public ShaderReader(ProgramLoadingConfiguration configuration)
             : base(new[] { configuration.ShaderExtension })
         {
         }
 
         /// <inheritdoc/>
-        public override Shader Load(Stream stream, string path, string extension)
+        public override Shader Read(Stream stream, string path, string extension)
         {
             // The media loading service will dispose of the source stream for us.
             using (var streamReader = new StreamReader(stream, leaveOpen: true))
             {
-                return new Shader(streamReader.ReadToEnd());
+                return new Shader(streamReader.ReadToEnd(), stream);
             }
         }
     }
