@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using System.IO;
+using System.Linq;
 using DomainDrivenGameEngine.Media.Loaders;
 using DomainDrivenGameEngine.Media.Models;
 using DomainDrivenGameEngine.Media.OpenTK.Models;
@@ -19,17 +19,12 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Loaders
 
             var bufferId = AL.GenBuffer();
 
-            using (var memoryStream = new MemoryStream())
-            {
-                soundEffect.Stream.CopyTo(memoryStream);
+            AL.BufferData(bufferId,
+                          soundEffect.Channels == 2 ? ALFormat.Stereo16 : ALFormat.Mono16,
+                          soundEffect.Bytes.ToArray(),
+                          soundEffect.SampleRate);
 
-                AL.BufferData(bufferId,
-                              soundEffect.Channels == 2 ? ALFormat.Stereo16 : ALFormat.Mono16,
-                              memoryStream.ToArray(),
-                              soundEffect.SampleRate);
-
-                return new LoadedSoundEffect(bufferId);
-            }
+            return new LoadedSoundEffect(bufferId);
         }
 
         /// <inheritdoc/>

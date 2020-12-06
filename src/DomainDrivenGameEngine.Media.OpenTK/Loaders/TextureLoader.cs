@@ -133,13 +133,8 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Loaders
             for (var index = 0; index < 6; index++)
             {
                 var texture = textures[index];
-                byte[] bytes = null;
-                using (var memoryStream = new MemoryStream())
-                {
-                    texture.Stream.CopyTo(memoryStream);
-                    bytes = memoryStream.ToArray();
-                }
 
+                var bytes = texture.Bytes.ToArray();
                 if (texture.Format == TextureFormat.Rgb24)
                 {
                     bytes = ConvertBytesToRgba32(bytes);
@@ -201,13 +196,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Loaders
                 var sourceTexture = textures.Length > index ? textures[index] : null;
                 if (sourceTexture != null)
                 {
-                    byte[] sourceBytes = null;
-                    using (var memoryStream = new MemoryStream())
-                    {
-                        sourceTexture.Stream.CopyTo(memoryStream);
-                        sourceBytes = memoryStream.ToArray();
-                    }
-
+                    byte[] sourceBytes = sourceTexture.Bytes.ToArray();
                     var bytesPerPixel = sourceTexture.Format == TextureFormat.Rgba32 ? 4 : 3;
                     var sourceIndex = 0;
                     for (var destIndex = index; destIndex < bytes.Length; destIndex += 4)
@@ -242,13 +231,7 @@ namespace DomainDrivenGameEngine.Media.OpenTK.Loaders
 
             GL.BindTexture(TextureTarget.Texture2D, textureId);
 
-            byte[] bytes = null;
-            using (var memoryStream = new MemoryStream())
-            {
-                texture.Stream.CopyTo(memoryStream);
-                bytes = memoryStream.ToArray();
-            }
-
+            var bytes = texture.Bytes.ToArray();
             if (texture.Format == TextureFormat.Rgb24)
             {
                 bytes = ConvertBytesToRgba32(bytes);
